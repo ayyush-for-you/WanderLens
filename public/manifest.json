@@ -1,0 +1,41 @@
+{
+  "name": "WanderLens",
+  "short_name": "WanderLens",
+  "description": "Scan monuments, discover hidden gems, travel safely.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0e0d",
+  "theme_color": "#0f0e0d",
+  "orientation": "portrait-primary",
+  "categories": ["travel", "lifestyle", "education"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Scan Monument",
+      "short_name": "Scan",
+      "description": "Open the monument scanner",
+      "url": "/scan",
+      "icons": [{ "src": "/icons/shortcut-scan.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Discover",
+      "short_name": "Discover",
+      "description": "Find hidden gems near you",
+      "url": "/discover",
+      "icons": [{ "src": "/icons/shortcut-discover.png", "sizes": "96x96" }]
+    }
+  ]
+}
