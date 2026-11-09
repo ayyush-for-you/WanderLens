@@ -12,15 +12,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const destinationId = searchParams.get("destination_id");
     const placeId = searchParams.get("place_id");
+    const mine = searchParams.get("mine") === "true";
     const limit = parseInt(searchParams.get("limit") || "20");
 
     const supabase = await createClient();
     let query = supabase
       .from("posts")
-      .select("*, profiles(id, display_name, avatar_url, role), places(id, name, category, destination_id), post_images(id, storage_path)")
+      .select("*, profiles!posts_user_id_fkey(id, display_name, avatar_url, role), places(id, name, category, destination_id), post_images(id, storage_path)")
       .eq("is_hidden", false)
       .order("created_at", { ascending: false })
       .limit(limit);
+
+    if (mine) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        query = query.eq("user_id", user.id);
+      }
+    }
 
     if (placeId) {
       query = query.eq("place_id", placeId);

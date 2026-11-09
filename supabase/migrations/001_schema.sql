@@ -79,10 +79,10 @@ CREATE OR REPLACE TRIGGER profiles_updated_at
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Auto-create profile on sign-up
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  INSERT INTO profiles (id, display_name, is_verified)
+  INSERT INTO public.profiles (id, display_name, is_verified)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)),
@@ -93,25 +93,27 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Sync email verification status
-CREATE OR REPLACE FUNCTION handle_user_updated()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+CREATE OR REPLACE FUNCTION public.handle_user_updated()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   IF NEW.email_confirmed_at IS NOT NULL AND OLD.email_confirmed_at IS NULL THEN
-    UPDATE profiles SET is_verified = TRUE, updated_at = NOW()
+    UPDATE public.profiles SET is_verified = TRUE, updated_at = NOW()
     WHERE id = NEW.id;
   END IF;
   RETURN NEW;
 END;
 $$;
 
-CREATE OR REPLACE TRIGGER on_auth_user_updated
+DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
+CREATE TRIGGER on_auth_user_updated
   AFTER UPDATE ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_user_updated();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_user_updated();
 
 -- ─── Audit log ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS audit_log (

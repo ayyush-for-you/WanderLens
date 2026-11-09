@@ -17,8 +17,10 @@ import {
 import toast from "react-hot-toast";
 import type { Destination, PlaceCategory, Profile } from "@/types/database";
 import type { RankedPlaceResult } from "@/lib/recommendations/ranking";
+import dynamic from "next/dynamic";
 import PlaceDetailModal from "./PlaceDetailModal";
-import DiscoverMap from "./DiscoverMap";
+
+const DiscoverMap = dynamic(() => import("./DiscoverMap"), { ssr: false });
 
 interface DiscoverClientProps {
   initialDestinations: Destination[];
