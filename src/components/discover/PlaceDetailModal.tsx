@@ -24,6 +24,27 @@ interface PlaceDetailModalProps {
   onClose: () => void;
 }
 
+/* ─── Shared style tokens ─────────────────────────────────────────── */
+const panelStyle: React.CSSProperties = {
+  background: "var(--panel)",
+  border: "1px solid var(--line)",
+  backdropFilter: "blur(22px) saturate(140%)",
+  WebkitBackdropFilter: "blur(22px) saturate(140%)",
+};
+
+const inputStyle: React.CSSProperties = {
+  flex: 1,
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid var(--line)",
+  borderRadius: 10,
+  color: "var(--text)",
+  padding: "7px 12px",
+  fontSize: "0.8rem",
+  fontFamily: "inherit",
+  outline: "none",
+  width: "100%",
+};
+
 export default function PlaceDetailModal({
   placeId,
   profile,
@@ -199,7 +220,7 @@ export default function PlaceDetailModal({
         position: "fixed",
         inset: 0,
         zIndex: 90,
-        background: "rgba(0,0,0,0.8)",
+        background: "rgba(0,0,0,0.75)",
         backdropFilter: "blur(6px)",
         display: "flex",
         alignItems: "center",
@@ -208,15 +229,14 @@ export default function PlaceDetailModal({
       }}
     >
       <div
-        className="card animate-fade-in-scale"
+        className="animate-fade-in-scale"
         style={{
+          ...panelStyle,
           width: "100%",
           maxWidth: 580,
           maxHeight: "92vh",
           overflowY: "auto",
           padding: 0,
-          background: "var(--bg-base)",
-          border: "1px solid var(--border)",
           borderRadius: 16,
         }}
       >
@@ -225,10 +245,11 @@ export default function PlaceDetailModal({
           style={{
             position: "sticky",
             top: 0,
-            background: "rgba(15,14,13,0.92)",
-            backdropFilter: "blur(10px)",
+            background: "rgba(11,16,19,0.92)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
             padding: "16px 20px",
-            borderBottom: "1px solid var(--border-soft)",
+            borderBottom: "1px solid var(--line)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -236,14 +257,48 @@ export default function PlaceDetailModal({
           }}
         >
           <div>
-            <span className="badge badge-teal" style={{ marginBottom: 4 }}>
+            <span
+              style={{
+                display: "inline-block",
+                fontSize: "0.7rem",
+                fontWeight: 600,
+                letterSpacing: "0.07em",
+                textTransform: "capitalize",
+                color: "#00C9A7",
+                border: "1px solid rgba(0,201,167,0.3)",
+                borderRadius: 999,
+                padding: "2px 9px",
+                marginBottom: 4,
+              }}
+            >
               {place?.category || "Place"}
             </span>
-            <h2 className="font-display" style={{ fontSize: "1.3rem", fontWeight: 700 }}>
-              {place?.name || "Loading..."}
+            <h2
+              style={{
+                fontSize: "1.2rem",
+                fontWeight: 500,
+                color: "var(--text)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {place?.name || "Loading…"}
             </h2>
           </div>
-          <button onClick={onClose} className="btn btn-secondary btn-sm btn-icon">
+          <button
+            onClick={onClose}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 32,
+              height: 32,
+              background: "var(--hover)",
+              border: "1px solid var(--line)",
+              borderRadius: "50%",
+              color: "var(--soft)",
+              cursor: "pointer",
+            }}
+          >
             <X size={16} />
           </button>
         </div>
@@ -256,8 +311,8 @@ export default function PlaceDetailModal({
                 display: "inline-block",
                 width: 28,
                 height: 28,
-                border: "2px solid rgba(45,212,191,0.2)",
-                borderTopColor: "var(--accent-teal)",
+                border: "2px solid var(--line)",
+                borderTopColor: "#00C9A7",
                 borderRadius: "50%",
               }}
             />
@@ -266,14 +321,22 @@ export default function PlaceDetailModal({
           <div style={{ padding: 20 }}>
             {/* Description & Rating Banner */}
             <div
-              className="card"
               style={{
+                background: "rgba(255,255,255,0.025)",
+                border: "1px solid var(--line)",
+                borderRadius: 12,
                 padding: "16px",
                 marginBottom: 20,
-                background: "rgba(255,255,255,0.02)",
               }}
             >
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 14 }}>
+              <p
+                style={{
+                  color: "var(--soft)",
+                  fontSize: "0.9rem",
+                  lineHeight: 1.6,
+                  marginBottom: 14,
+                }}
+              >
                 {place?.description || "No description provided."}
               </p>
 
@@ -283,25 +346,36 @@ export default function PlaceDetailModal({
                   alignItems: "center",
                   justifyContent: "space-between",
                   paddingTop: 12,
-                  borderTop: "1px solid var(--border-soft)",
+                  borderTop: "1px solid var(--line)",
                   flexWrap: "wrap",
                   gap: 10,
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <Star size={18} fill="#fbbf24" color="#fbbf24" />
-                  <span style={{ fontSize: "1.1rem", fontWeight: 800 }}>
+                  <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
                     {Number(place?.avg_rating || 0).toFixed(1)}
                   </span>
-                  <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
                     ({place?.n_ratings || 0} traveller ratings)
                   </span>
                 </div>
 
                 <button
                   onClick={() => setCreatePostOpen(true)}
-                  className="btn btn-primary btn-sm"
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: "#fff",
+                    color: "#0b0f12",
+                    border: "none",
+                    borderRadius: 999,
+                    padding: "7px 14px",
+                    fontSize: "0.8rem",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                  }}
                 >
                   <Plus size={14} /> Add Review
                 </button>
@@ -310,36 +384,76 @@ export default function PlaceDetailModal({
 
             {/* Posts & Reviews Feed */}
             <div style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-muted)", marginBottom: 14 }}>
-                Traveller Stories & Photos ({posts.length})
+              <h3
+                style={{
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.07em",
+                  color: "var(--muted)",
+                  marginBottom: 14,
+                }}
+              >
+                Traveller Stories &amp; Photos ({posts.length})
               </h3>
 
               {posts.length === 0 ? (
-                <div className="card" style={{ padding: "32px 16px", textAlign: "center" }}>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: 10 }}>
+                <div
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 12,
+                    padding: "32px 16px",
+                    textAlign: "center",
+                  }}
+                >
+                  <p style={{ fontSize: "0.9rem", color: "var(--muted)", marginBottom: 12 }}>
                     Be the first traveller to share a photo and review of {place?.name}!
                   </p>
-                  <button onClick={() => setCreatePostOpen(true)} className="btn btn-teal btn-sm">
+                  <button
+                    onClick={() => setCreatePostOpen(true)}
+                    style={{
+                      background: "#00C9A7",
+                      color: "#0b0f12",
+                      border: "none",
+                      borderRadius: 999,
+                      padding: "7px 16px",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
                     Write First Review
                   </button>
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {posts.map((post: any) => (
                     <div
                       key={post.id}
-                      className="card"
-                      style={{ padding: 16, background: "rgba(255,255,255,0.015)" }}
+                      style={{
+                        background: "rgba(255,255,255,0.02)",
+                        border: "1px solid var(--line)",
+                        borderRadius: 12,
+                        padding: 16,
+                      }}
                     >
                       {/* Post Author Bar */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 10,
+                        }}
+                      >
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                           <div
                             style={{
                               width: 32,
                               height: 32,
                               borderRadius: "50%",
-                              background: "var(--gradient-gold)",
+                              background: "linear-gradient(135deg, #B99A65, #E8C97A)",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -351,10 +465,10 @@ export default function PlaceDetailModal({
                             {post.profiles?.display_name?.charAt(0).toUpperCase() || "U"}
                           </div>
                           <div>
-                            <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>
+                            <p style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--text)" }}>
                               {post.profiles?.display_name || "Traveller"}
                             </p>
-                            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                            <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
                               {new Date(post.created_at).toLocaleDateString()}
                             </p>
                           </div>
@@ -363,7 +477,7 @@ export default function PlaceDetailModal({
                         {/* Star Rating Badge */}
                         <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                           <Star size={13} fill="#fbbf24" color="#fbbf24" />
-                          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--accent-gold)" }}>
+                          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#B99A65" }}>
                             {post.rating}.0
                           </span>
                         </div>
@@ -371,7 +485,14 @@ export default function PlaceDetailModal({
 
                       {/* Post Caption */}
                       {post.caption && (
-                        <p style={{ fontSize: "0.875rem", color: "var(--text-primary)", lineHeight: 1.5, marginBottom: 10 }}>
+                        <p
+                          style={{
+                            fontSize: "0.875rem",
+                            color: "var(--soft)",
+                            lineHeight: 1.5,
+                            marginBottom: 10,
+                          }}
+                        >
                           {post.caption}
                         </p>
                       )}
@@ -394,7 +515,7 @@ export default function PlaceDetailModal({
                               <img
                                 src={`https://images.unsplash.com/photo-1599661046289-e31897846e41?w=600&auto=format&fit=crop&q=80`}
                                 alt="Traveller photo"
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                               />
                             </div>
                           ))}
@@ -408,7 +529,7 @@ export default function PlaceDetailModal({
                           alignItems: "center",
                           justifyContent: "space-between",
                           paddingTop: 8,
-                          borderTop: "1px solid var(--border-soft)",
+                          borderTop: "1px solid var(--line)",
                           fontSize: "0.8rem",
                         }}
                       >
@@ -422,7 +543,8 @@ export default function PlaceDetailModal({
                               display: "flex",
                               alignItems: "center",
                               gap: 4,
-                              color: post.is_liked_by_me ? "#f87171" : "var(--text-muted)",
+                              color: post.is_liked_by_me ? "#f87171" : "var(--muted)",
+                              fontSize: "0.8rem",
                             }}
                           >
                             <Heart size={15} fill={post.is_liked_by_me ? "#f87171" : "none"} />
@@ -438,7 +560,8 @@ export default function PlaceDetailModal({
                               display: "flex",
                               alignItems: "center",
                               gap: 4,
-                              color: "var(--text-muted)",
+                              color: "var(--muted)",
+                              fontSize: "0.8rem",
                             }}
                           >
                             <MessageCircle size={15} />
@@ -450,7 +573,14 @@ export default function PlaceDetailModal({
                           {profile?.id === post.user_id && (
                             <button
                               onClick={() => handleDeletePost(post.id)}
-                              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "var(--muted)",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                              }}
                               title="Delete my post"
                             >
                               <Trash2 size={13} />
@@ -458,7 +588,14 @@ export default function PlaceDetailModal({
                           )}
                           <button
                             onClick={() => setReportingPostId(post.id)}
-                            style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "var(--muted)",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
                             title="Report post"
                           >
                             <Flag size={13} />
@@ -473,21 +610,43 @@ export default function PlaceDetailModal({
                           style={{
                             marginTop: 12,
                             paddingTop: 10,
-                            borderTop: "1px solid var(--border)",
+                            borderTop: "1px solid var(--line)",
                           }}
                         >
-                          <div style={{ maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                          <div
+                            style={{
+                              maxHeight: 180,
+                              overflowY: "auto",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 6,
+                              marginBottom: 10,
+                            }}
+                          >
                             {commentsLoading ? (
-                              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Loading comments…</p>
+                              <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                                Loading comments…
+                              </p>
                             ) : comments.length === 0 ? (
-                              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>No comments yet. Start the conversation!</p>
+                              <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                                No comments yet. Start the conversation!
+                              </p>
                             ) : (
                               comments.map((c) => (
-                                <div key={c.id} style={{ fontSize: "0.8rem", background: "rgba(255,255,255,0.02)", padding: "6px 10px", borderRadius: 6 }}>
-                                  <span style={{ fontWeight: 600, color: "var(--accent-teal)" }}>
+                                <div
+                                  key={c.id}
+                                  style={{
+                                    fontSize: "0.8rem",
+                                    background: "rgba(255,255,255,0.03)",
+                                    border: "1px solid var(--line)",
+                                    padding: "6px 10px",
+                                    borderRadius: 8,
+                                  }}
+                                >
+                                  <span style={{ fontWeight: 600, color: "#00C9A7" }}>
                                     {c.profiles?.display_name || "Traveller"}:{" "}
                                   </span>
-                                  <span style={{ color: "var(--text-secondary)" }}>{c.body}</span>
+                                  <span style={{ color: "var(--soft)" }}>{c.body}</span>
                                 </div>
                               ))
                             )}
@@ -496,13 +655,26 @@ export default function PlaceDetailModal({
                           {/* Post comment input */}
                           <form onSubmit={handleCommentSubmit} style={{ display: "flex", gap: 6 }}>
                             <input
-                              className="input"
                               placeholder="Write a comment..."
                               value={commentInput}
                               onChange={(e) => setCommentInput(e.target.value)}
-                              style={{ padding: "6px 10px", fontSize: "0.8rem" }}
+                              style={inputStyle}
                             />
-                            <button type="submit" className="btn btn-teal btn-sm" disabled={!commentInput.trim()}>
+                            <button
+                              type="submit"
+                              disabled={!commentInput.trim()}
+                              style={{
+                                background: "#00C9A7",
+                                color: "#0b0f12",
+                                border: "none",
+                                borderRadius: 999,
+                                padding: "0 14px",
+                                cursor: commentInput.trim() ? "pointer" : "not-allowed",
+                                opacity: commentInput.trim() ? 1 : 0.5,
+                                display: "flex",
+                                alignItems: "center",
+                              }}
+                            >
                               <Send size={13} />
                             </button>
                           </form>
@@ -530,26 +702,55 @@ export default function PlaceDetailModal({
               padding: 16,
             }}
           >
-            <div className="card" style={{ maxWidth: 380, width: "100%", padding: 20 }}>
-              <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 6 }}>Report Post</h3>
-              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 12 }}>
+            <div
+              style={{
+                background: "var(--panel)",
+                border: "1px solid var(--line)",
+                borderRadius: 16,
+                backdropFilter: "blur(22px)",
+                WebkitBackdropFilter: "blur(22px)",
+                maxWidth: 380,
+                width: "100%",
+                padding: 20,
+              }}
+            >
+              <h3 style={{ fontSize: "1rem", fontWeight: 500, color: "var(--text)", marginBottom: 6 }}>
+                Report Post
+              </h3>
+              <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginBottom: 12 }}>
                 Help keep WanderLens authentic and respectful. Please describe the issue.
               </p>
               <textarea
-                className="input"
                 rows={3}
                 placeholder="Inappropriate content, spam, incorrect info..."
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
                 maxLength={500}
-                style={{ marginBottom: 12 }}
+                style={{
+                  ...inputStyle,
+                  resize: "vertical",
+                  marginBottom: 12,
+                  padding: "10px 12px",
+                  fontSize: "0.875rem",
+                  borderRadius: 10,
+                }}
               />
               <div style={{ display: "flex", gap: 8 }}>
                 <button
                   onClick={submitReport}
                   disabled={reportSubmitting || !reportReason.trim()}
-                  className="btn btn-danger btn-sm"
-                  style={{ flex: 1 }}
+                  style={{
+                    flex: 1,
+                    background: "var(--danger)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 999,
+                    padding: "8px",
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    cursor: reportSubmitting || !reportReason.trim() ? "not-allowed" : "pointer",
+                    opacity: reportSubmitting || !reportReason.trim() ? 0.6 : 1,
+                  }}
                 >
                   {reportSubmitting ? "Submitting…" : "Submit Report"}
                 </button>
@@ -558,7 +759,15 @@ export default function PlaceDetailModal({
                     setReportingPostId(null);
                     setReportReason("");
                   }}
-                  className="btn btn-secondary btn-sm"
+                  style={{
+                    background: "var(--hover)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 999,
+                    color: "var(--soft)",
+                    padding: "8px 16px",
+                    fontSize: "0.875rem",
+                    cursor: "pointer",
+                  }}
                 >
                   Cancel
                 </button>
@@ -582,4 +791,3 @@ export default function PlaceDetailModal({
     </div>
   );
 }
-

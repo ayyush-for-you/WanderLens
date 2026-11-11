@@ -6,9 +6,10 @@ import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { Compass, MapPin, ArrowRight } from "lucide-react";
 
-// Dynamically import Leaflet map preview to avoid SSR issues
+// Dynamically import Leaflet map preview to avoid SSR issues — UNCHANGED
 const LandingMap = dynamic(() => import("./LandingMapInner"), { ssr: false });
 
+// ── Data unchanged ──────────────────────────────────────────────────────────
 const MAP_MONUMENTS = [
   {
     id: 1,
@@ -46,7 +47,7 @@ const MAP_MONUMENTS = [
     city: "Old Delhi",
     state: "Delhi",
     lat: 28.6562,
-    lng: 77.2410,
+    lng: 77.241,
     era: "1638 AD · Mughal Imperial",
     image: "https://images.unsplash.com/photo-1592635196078-9ffc8f654b9d?w=600",
   },
@@ -62,24 +63,58 @@ const MAP_MONUMENTS = [
   },
 ];
 
+// ── Component ───────────────────────────────────────────────────────────────
 export default function InteractiveMapSection() {
+  // State and onSelect handler unchanged
   const [selectedMonument, setSelectedMonument] = useState(MAP_MONUMENTS[0]);
 
   return (
-    <section id="interactive-map" className="theme-section-dark py-28 md:py-36 px-6 relative border-t border-white/10">
-      <div className="max-w-7xl mx-auto space-y-10">
-        {/* Section Heading */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <section
+      id="interactive-map"
+      style={{
+        background: "var(--ink)",
+        color: "var(--text)",
+        padding: "clamp(80px, 10vw, 144px) clamp(20px, 3.4vw, 52px)",
+        position: "relative",
+        borderTop: "1px solid var(--line)",
+      }}
+    >
+      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", flexDirection: "column", gap: 40 }}>
+        {/* Section heading */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            gap: 24,
+          }}
+        >
           <div>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="w-8 h-px bg-[#B99A65]" />
-              <span className="text-[11px] font-bold tracking-[0.25em] text-[#B99A65] uppercase font-['Manrope']">
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <span style={{ width: 32, height: 1, background: "#B99A65", display: "block" }} />
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.25em",
+                  color: "#B99A65",
+                  textTransform: "uppercase",
+                }}
+              >
                 Cartographic Intelligence
               </span>
             </div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-normal font-['Playfair_Display'] text-[#F5F0E7] leading-tight">
+            <h2
+              style={{
+                fontSize: "clamp(2rem, 5vw, 3.5rem)",
+                fontWeight: 400,
+                lineHeight: 1.15,
+                color: "var(--text)",
+              }}
+            >
               The World Is Yours{" "}
-              <span className="italic font-['Cormorant_Garamond'] text-[#B99A65] font-light">
+              <span style={{ fontStyle: "italic", color: "#B99A65", fontWeight: 300 }}>
                 to Explore.
               </span>
             </h2>
@@ -87,61 +122,169 @@ export default function InteractiveMapSection() {
 
           <Link
             href="/discover"
-            className="px-6 py-3 rounded-full btn-luxury-gold text-xs flex items-center gap-2 self-start md:self-auto"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              height: 40,
+              padding: "0 20px",
+              borderRadius: 999,
+              background: "#B99A65",
+              color: "#0b1013",
+              fontSize: 13,
+              fontWeight: 500,
+              textDecoration: "none",
+              transition: "background 0.25s, transform 0.25s",
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement;
+              el.style.background = "#caa974";
+              el.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement;
+              el.style.background = "#B99A65";
+              el.style.transform = "";
+            }}
           >
-            <Compass className="w-4 h-4" />
+            <Compass style={{ width: 14, height: 14 }} />
             <span>Open Dedicated Map Room</span>
           </Link>
         </div>
 
-        {/* Map Frame Container */}
-        <div className="relative rounded-3xl overflow-hidden border border-white/15 shadow-2xl h-[560px] bg-[#0E1522]">
+        {/* Map frame — LandingMap and onSelect handler untouched */}
+        <div
+          style={{
+            position: "relative",
+            borderRadius: 16,
+            overflow: "hidden",
+            border: "1px solid var(--line)",
+            boxShadow: "0 30px 70px rgba(0,0,0,0.5)",
+            height: 560,
+            background: "#0E1522",
+          }}
+        >
           <LandingMap
             monuments={MAP_MONUMENTS}
             onSelect={(m) => setSelectedMonument(m)}
           />
 
-          {/* Floating Refined Destination Story Panel */}
+          {/* Floating monument panel — motion animation unchanged */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             key={selectedMonument.id}
-            className="absolute bottom-6 left-6 right-6 sm:right-auto sm:max-w-md z-[1000] luxury-glass-dark p-5 rounded-2xl border border-white/20 shadow-2xl"
+            style={{
+              position: "absolute",
+              bottom: 24,
+              left: 24,
+              right: 24,
+              maxWidth: 420,
+              zIndex: 1000,
+              background: "var(--panel)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid var(--line)",
+              borderRadius: 16,
+              padding: 20,
+              boxShadow: "0 16px 40px rgba(0,0,0,0.5)",
+            }}
           >
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/20 flex-shrink-0">
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 10,
+                  overflow: "hidden",
+                  border: "1px solid var(--line)",
+                  flexShrink: 0,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selectedMonument.image}
                   alt={selectedMonument.name}
-                  className="w-full h-full object-cover"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </div>
 
-              <div className="flex-1">
-                <span className="text-[10px] font-mono text-[#B99A65] uppercase tracking-wider block">
+              <div style={{ flex: 1 }}>
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: "#B99A65",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    display: "block",
+                    marginBottom: 2,
+                  }}
+                >
                   {selectedMonument.era}
                 </span>
-                <h4 className="text-lg font-bold font-['Playfair_Display'] text-white">
+                <h4
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 500,
+                    color: "var(--text)",
+                    marginBottom: 4,
+                  }}
+                >
                   {selectedMonument.name}
                 </h4>
-                <div className="text-[11px] text-[#D9C7AC]/70 flex items-center gap-1.5 mt-0.5 font-['Manrope']">
-                  <MapPin className="w-3 h-3 text-[#B99A65]" />
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--muted)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <MapPin style={{ width: 11, height: 11, color: "#B99A65" }} />
                   <span>
-                    {selectedMonument.city}, {selectedMonument.state} · {selectedMonument.lat.toFixed(4)}°N,{" "}
-                    {selectedMonument.lng.toFixed(4)}°E
+                    {selectedMonument.city}, {selectedMonument.state} ·{" "}
+                    {selectedMonument.lat.toFixed(4)}°N, {selectedMonument.lng.toFixed(4)}°E
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-              <span className="text-[11px] text-white/50 font-mono">Coordinates Verified</span>
+            <div
+              style={{
+                marginTop: 16,
+                paddingTop: 12,
+                borderTop: "1px solid var(--line)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <span style={{ fontSize: 11, color: "var(--muted)" }}>Coordinates Verified</span>
               <Link
                 href="/scan"
-                className="px-3.5 py-1.5 rounded-lg bg-[#B99A65] hover:bg-[#caa974] text-[#101B2B] text-xs font-bold font-['Manrope'] flex items-center gap-1.5 shadow"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "6px 14px",
+                  borderRadius: 8,
+                  background: "#B99A65",
+                  color: "#0b1013",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  transition: "background 0.25s",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLAnchorElement).style.background = "#caa974")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLAnchorElement).style.background = "#B99A65")
+                }
               >
                 <span>Scan Site</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight style={{ width: 12, height: 12 }} />
               </Link>
             </div>
           </motion.div>

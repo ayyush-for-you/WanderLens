@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Globe } from "lucide-react";
 
+// ── Data unchanged ──────────────────────────────────────────────────────────
 const HERITAGE_NODES = [
   {
     name: "Jaipur Circuit",
@@ -19,7 +20,7 @@ const HERITAGE_NODES = [
     state: "Delhi NCR",
     lat: "28.61° N",
     lng: "77.20° E",
-    sites: "Qutub Minar, Red Fort, Humayun’s Tomb",
+    sites: "Qutub Minar, Red Fort, Humayun's Tomb",
     x: 48,
     y: 36,
   },
@@ -44,92 +45,245 @@ const HERITAGE_NODES = [
 ];
 
 export default function GlobeExplorationSection() {
+  // State and onClick handler unchanged
   const [activeNode, setActiveNode] = useState(HERITAGE_NODES[0]);
 
   return (
-    <section className="theme-section-dark py-28 md:py-36 px-6 relative border-t border-white/10 overflow-hidden">
-      <div className="max-w-7xl mx-auto space-y-12">
-        <div className="text-center max-w-3xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#B99A65]/30 bg-[#B99A65]/10 text-[#B99A65] text-[11px] font-bold tracking-widest uppercase font-mono">
-            <Globe className="w-3.5 h-3.5" />
+    <section
+      style={{
+        background: "var(--ink)",
+        color: "var(--text)",
+        padding: "clamp(80px, 10vw, 144px) clamp(20px, 3.4vw, 52px)",
+        position: "relative",
+        overflow: "hidden",
+        borderTop: "1px solid var(--line)",
+      }}
+    >
+      <div
+        style={{ maxWidth: 1280, margin: "0 auto", display: "flex", flexDirection: "column", gap: 48 }}
+      >
+        {/* Section header */}
+        <div
+          style={{
+            textAlign: "center",
+            maxWidth: 720,
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 14px",
+              borderRadius: 999,
+              border: "1px solid rgba(185,154,101,0.3)",
+              background: "rgba(185,154,101,0.08)",
+              color: "#B99A65",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              alignSelf: "center",
+            }}
+          >
+            <Globe style={{ width: 13, height: 13 }} />
             <span>Interactive Heritage Sphere</span>
           </div>
 
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-normal font-['Playfair_Display'] text-[#F5F0E7]">
+          <h2
+            style={{
+              fontSize: "clamp(2rem, 5vw, 3.5rem)",
+              fontWeight: 400,
+              lineHeight: 1.15,
+              color: "var(--text)",
+            }}
+          >
             Constellations of{" "}
-            <span className="italic font-['Cormorant_Garamond'] text-[#B99A65] font-light">
+            <span style={{ fontStyle: "italic", color: "#B99A65", fontWeight: 300 }}>
               Indian Heritage.
             </span>
           </h2>
-          <p className="text-sm text-[#D9C7AC]/70 font-light max-w-xl mx-auto font-['Manrope']">
-            Click on any archaeological circuit node across the Indian subcontinent to inspect its telemetry and monumental wonders.
+          <p style={{ fontSize: 14, color: "var(--muted)", fontWeight: 300, lineHeight: 1.65 }}>
+            Click on any archaeological circuit node across the Indian subcontinent to inspect its
+            telemetry and monumental wonders.
           </p>
         </div>
 
-        {/* Visual Globe / Radar Projection Canvas */}
-        <div className="relative max-w-4xl mx-auto aspect-[16/9] rounded-3xl overflow-hidden luxury-glass-dark border border-white/15 p-6 flex items-center justify-center">
-          {/* Subtle concentric orbital rings */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-[500px] h-[500px] rounded-full border border-white/5 animate-spin" style={{ animationDuration: "35s" }} />
-            <div className="w-[340px] h-[340px] rounded-full border border-[#B99A65]/10" />
-            <div className="w-[200px] h-[200px] rounded-full border border-[#B99A65]/15" />
+        {/* Globe canvas */}
+        <div
+          style={{
+            position: "relative",
+            maxWidth: 896,
+            margin: "0 auto",
+            aspectRatio: "16/9",
+            borderRadius: 16,
+            overflow: "hidden",
+            background: "var(--panel)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: "1px solid var(--line)",
+            padding: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 30px 70px rgba(0,0,0,0.5)",
+            width: "100%",
+          }}
+        >
+          {/* Concentric orbital rings — animation unchanged */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              style={{
+                width: 500,
+                height: 500,
+                borderRadius: "50%",
+                border: "1px solid rgba(255,255,255,0.05)",
+                animation: "spin 35s linear infinite",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                width: 340,
+                height: 340,
+                borderRadius: "50%",
+                border: "1px solid rgba(185,154,101,0.1)",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                width: 200,
+                height: 200,
+                borderRadius: "50%",
+                border: "1px solid rgba(185,154,101,0.15)",
+              }}
+            />
           </div>
 
-          {/* Subcontinent Map Grid Points */}
-          <div className="relative w-full h-full">
+          {/* Nodes — onClick handler unchanged */}
+          <div style={{ position: "relative", width: "100%", height: "100%" }}>
             {HERITAGE_NODES.map((node) => {
               const isSelected = node.name === activeNode.name;
               return (
                 <div
                   key={node.name}
                   onClick={() => setActiveNode(node)}
-                  style={{ top: `${node.y}%`, left: `${node.x}%` }}
-                  className="absolute cursor-pointer -translate-x-1/2 -translate-y-1/2 group"
+                  style={{
+                    position: "absolute",
+                    top: `${node.y}%`,
+                    left: `${node.x}%`,
+                    transform: "translate(-50%, -50%)",
+                    cursor: "pointer",
+                  }}
                 >
-                  <div className="relative flex items-center justify-center">
+                  <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: "50%",
+                          background: isSelected ? "#B99A65" : "rgba(255,255,255,0.4)",
+                          transform: isSelected ? "scale(1.25)" : "scale(1)",
+                          transition: "all 0.25s",
+                          display: "block",
+                        }}
+                      />
+                      {isSelected && (
+                        <span
+                          style={{
+                            position: "absolute",
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            border: "1px solid #B99A65",
+                            animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite",
+                          }}
+                        />
+                      )}
+                    </div>
                     <span
-                      className={`w-4 h-4 rounded-full transition-all ${
-                        isSelected ? "bg-[#B99A65] scale-125" : "bg-white/40 group-hover:bg-[#B99A65]"
-                      }`}
-                    />
-                    <span
-                      className={`absolute w-8 h-8 rounded-full border border-[#B99A65] animate-ping ${
-                        isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-60"
-                      }`}
-                    />
+                      style={{
+                        fontSize: 10,
+                        letterSpacing: "0.08em",
+                        display: "block",
+                        marginTop: 6,
+                        whiteSpace: "nowrap",
+                        color: isSelected ? "#B99A65" : "rgba(255,255,255,0.6)",
+                        fontWeight: isSelected ? 700 : 400,
+                        transition: "color 0.25s",
+                      }}
+                    >
+                      {node.name}
+                    </span>
                   </div>
-                  <span
-                    className={`text-[10px] font-mono tracking-wider block mt-1.5 whitespace-nowrap ${
-                      isSelected ? "text-[#B99A65] font-bold" : "text-white/60 group-hover:text-white"
-                    }`}
-                  >
-                    {node.name}
-                  </span>
                 </div>
               );
             })}
           </div>
 
-          {/* Active Node Detail Card Overlay */}
+          {/* Active node detail — motion animation unchanged */}
           <motion.div
             key={activeNode.name}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-6 left-6 right-6 sm:right-auto sm:max-w-sm luxury-glass-dark p-4 rounded-2xl border border-[#B99A65]/40"
+            style={{
+              position: "absolute",
+              bottom: 24,
+              left: 24,
+              right: 24,
+              maxWidth: 340,
+              background: "var(--panel)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid rgba(185,154,101,0.4)",
+              borderRadius: 14,
+              padding: 16,
+            }}
           >
-            <div className="flex items-center justify-between text-[10px] font-mono text-[#B99A65] mb-1">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                fontSize: 10,
+                color: "#B99A65",
+                marginBottom: 4,
+              }}
+            >
               <span>{activeNode.state}</span>
               <span>
                 {activeNode.lat}, {activeNode.lng}
               </span>
             </div>
-            <h4 className="text-base font-bold font-['Playfair_Display'] text-white">
+            <h4 style={{ fontSize: 16, fontWeight: 500, color: "var(--text)", marginBottom: 4 }}>
               {activeNode.name}
             </h4>
-            <p className="text-xs text-[#D9C7AC]/70 mt-1 font-['Manrope']">{activeNode.sites}</p>
+            <p style={{ fontSize: 12, color: "var(--muted)" }}>{activeNode.sites}</p>
           </motion.div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
+        }
+      `}</style>
     </section>
   );
 }

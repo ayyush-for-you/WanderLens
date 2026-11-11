@@ -5,97 +5,223 @@ import { Sparkles } from "lucide-react";
 
 export default function BrandStorySection() {
   return (
-    <section id="brand-story" className="theme-section-light py-28 md:py-36 px-6 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto">
-        {/* Editorial Eyebrow */}
-        <div className="flex items-center gap-3 mb-6">
-          <span className="w-8 h-px bg-[#B99A65]" />
-          <span className="text-[11px] font-bold tracking-[0.25em] text-[#B99A65] uppercase font-['Manrope']">
+    <section
+      id="brand-story"
+      style={{
+        background: "var(--ink)",
+        color: "var(--text)",
+        padding: "clamp(80px, 10vw, 144px) clamp(20px, 3.4vw, 52px)",
+        position: "relative",
+        overflow: "hidden",
+        borderTop: "1px solid var(--line)",
+      }}
+    >
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        {/* Eyebrow */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+          <span style={{ width: 32, height: 1, background: "#B99A65", display: "block" }} />
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.25em",
+              color: "#B99A65",
+              textTransform: "uppercase",
+            }}
+          >
             The Philosophy of Exploration
           </span>
         </div>
 
-        {/* Asymmetrical Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          {/* Left Column: Oversized Editorial Statement */}
-          <div className="lg:col-span-7 space-y-8">
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-normal font-['Playfair_Display'] text-[#242321] leading-[1.15]">
+        {/* Grid */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+            gap: "clamp(48px, 6vw, 80px)",
+            alignItems: "center",
+          }}
+        >
+          {/* Left: Editorial copy */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+            <h2
+              style={{
+                fontSize: "clamp(2rem, 5vw, 3.5rem)",
+                fontWeight: 400,
+                lineHeight: 1.15,
+                color: "var(--text)",
+              }}
+            >
               More Than Just{" "}
-              <span className="italic font-['Cormorant_Garamond'] text-[#B99A65] font-light">
+              <span
+                style={{
+                  fontStyle: "italic",
+                  color: "#B99A65",
+                  fontWeight: 300,
+                  fontFamily: "inherit",
+                }}
+              >
                 a Journey.
               </span>
             </h2>
 
-            <p className="text-lg sm:text-xl text-[#242321]/80 font-light font-['Manrope'] leading-relaxed">
-              Every monument has a story. Every journey creates a memory. WanderLens brings history, exploration and travel safety together in one connected, unforgettable experience.
+            <p style={{ fontSize: 18, color: "var(--soft)", fontWeight: 300, lineHeight: 1.65 }}>
+              Every monument has a story. Every journey creates a memory. WanderLens brings history,
+              exploration and travel safety together in one connected, unforgettable experience.
             </p>
 
-            <p className="text-sm text-[#242321]/70 leading-relaxed font-light">
-              We believe travel should feel like stepping into a living, breathing history book — where ruins regain their grandeur through AI-driven era reconstructions, and where every traveler moves with complete peace of mind, connected to their companions through state-of-the-art telemetry.
+            <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, fontWeight: 300 }}>
+              We believe travel should feel like stepping into a living, breathing history book —
+              where ruins regain their grandeur through AI-driven era reconstructions, and where
+              every traveler moves with complete peace of mind, connected to their companions
+              through state-of-the-art telemetry.
             </p>
 
-            {/* Three Brand Pillars */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-[#D9C7AC]/50">
-              <div>
-                <div className="text-2xl font-bold font-['Playfair_Display'] text-[#B99A65]">01</div>
-                <div className="text-xs font-bold uppercase tracking-wider text-[#242321] mt-1 font-['Manrope']">
-                  Heritage Discovery
+            {/* Three pillars */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                gap: 24,
+                paddingTop: 24,
+                borderTop: "1px solid var(--line)",
+              }}
+            >
+              {[
+                {
+                  num: "01",
+                  title: "Heritage Discovery",
+                  desc: "Instant visual monument recognition with era timelines and archival comparisons.",
+                },
+                {
+                  num: "02",
+                  title: "Dual Travel Modes",
+                  desc: "Tailored solo contemplative exploration and live synchronized group coordination.",
+                },
+                {
+                  num: "03",
+                  title: "Cloud Travel Safety",
+                  desc: "Hold-to-confirm emergency SOS, broadcast group alerts, and GPS peace of mind.",
+                },
+              ].map((p) => (
+                <div key={p.num}>
+                  <div
+                    style={{ fontSize: 22, fontWeight: 700, color: "#B99A65", marginBottom: 4 }}
+                  >
+                    {p.num}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      color: "var(--text)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {p.title}
+                  </div>
+                  <p style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>{p.desc}</p>
                 </div>
-                <p className="text-[11px] text-[#242321]/60 mt-1 leading-normal">
-                  Instant visual monument recognition with era timelines and archival comparisons.
-                </p>
-              </div>
-
-              <div>
-                <div className="text-2xl font-bold font-['Playfair_Display'] text-[#B99A65]">02</div>
-                <div className="text-xs font-bold uppercase tracking-wider text-[#242321] mt-1 font-['Manrope']">
-                  Dual Travel Modes
-                </div>
-                <p className="text-[11px] text-[#242321]/60 mt-1 leading-normal">
-                  Tailored solo contemplative exploration and live synchronized group coordination.
-                </p>
-              </div>
-
-              <div>
-                <div className="text-2xl font-bold font-['Playfair_Display'] text-[#B99A65]">03</div>
-                <div className="text-xs font-bold uppercase tracking-wider text-[#242321] mt-1 font-['Manrope']">
-                  Cloud Travel Safety
-                </div>
-                <p className="text-[11px] text-[#242321]/60 mt-1 leading-normal">
-                  Hold-to-confirm emergency SOS, broadcast group alerts, and GPS peace of mind.
-                </p>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Right Column: Asymmetrical Luxury Photography Composition */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative mx-auto max-w-md">
-              {/* Primary Architectural Image */}
-              <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] relative">
+          {/* Right: Photography composition */}
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "relative", maxWidth: 400, margin: "0 auto" }}>
+              {/* Primary image */}
+              <div
+                style={{
+                  borderRadius: 24,
+                  overflow: "hidden",
+                  border: "1px solid var(--line)",
+                  aspectRatio: "4/5",
+                  position: "relative",
+                  boxShadow: "0 30px 60px rgba(0,0,0,0.5)",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80&auto=format&fit=crop"
                   alt="Humayun Tomb Mughal Symmetry"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transition: "transform 0.7s ease",
+                  }}
+                  onMouseEnter={(e) =>
+                    ((e.currentTarget as HTMLImageElement).style.transform = "scale(1.05)")
+                  }
+                  onMouseLeave={(e) =>
+                    ((e.currentTarget as HTMLImageElement).style.transform = "")
+                  }
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                <div className="absolute bottom-4 left-4 text-white text-xs font-serif italic">
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(to top, rgba(0,0,0,0.5), transparent 50%)",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 16,
+                    left: 16,
+                    fontSize: 12,
+                    fontStyle: "italic",
+                    color: "var(--soft)",
+                  }}
+                >
                   Humayun's Tomb · Mughal Garden Symmetry
                 </div>
               </div>
 
-              {/* Overlapping Smaller Detail Card */}
-              <div className="absolute -bottom-8 -left-8 sm:-left-12 bg-white/95 backdrop-blur-md p-5 rounded-2xl shadow-xl border border-[#D9C7AC]/40 max-w-[220px] hidden sm:block">
-                <div className="flex items-center gap-2 text-[#B99A65] mb-1.5">
-                  <Sparkles className="w-4 h-4" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest font-mono">
+              {/* Floating stat card */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: -32,
+                  left: -32,
+                  background: "var(--panel)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  border: "1px solid var(--line)",
+                  borderRadius: 16,
+                  padding: "20px",
+                  maxWidth: 220,
+                  display: "none", // shown via CSS below
+                }}
+                className="brand-stat-card"
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    color: "#B99A65",
+                    marginBottom: 6,
+                  }}
+                >
+                  <Sparkles style={{ width: 14, height: 14 }} />
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
                     Curated Archive
                   </span>
                 </div>
-                <div className="text-xs font-bold text-[#242321] font-['Playfair_Display']">
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
                   950+ Historic Casements
                 </div>
-                <p className="text-[10px] text-[#242321]/60 mt-1 font-['Manrope']">
+                <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.5 }}>
                   Documented across 6 distinct architectural dynasties.
                 </p>
               </div>
@@ -103,6 +229,12 @@ export default function BrandStorySection() {
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (min-width: 640px) {
+          .brand-stat-card { display: block !important; }
+        }
+      `}</style>
     </section>
   );
 }

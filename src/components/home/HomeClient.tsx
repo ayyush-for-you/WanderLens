@@ -28,7 +28,7 @@ export default function HomeClient({ profile }: HomeClientProps) {
   };
 
   return (
-    <div className="w-full flex flex-col bg-[#101B2B] text-[#F5F0E7] overflow-x-hidden">
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", background: "var(--ink)", color: "var(--text)", overflowX: "hidden" }}>
       {/* 1. Full-Viewport Cinematic Hero Section */}
       <HeroSection
         onDiscover={() => scrollToSection("brand-story")}

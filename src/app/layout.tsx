@@ -1,11 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { Geist } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
+const geist = Geist({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-geist",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "WanderLens — Discover Heritage Differently",
+    default: "WanderLens — Discover heritage, travel safely",
     template: "%s | WanderLens",
   },
   description:
@@ -43,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={geist.variable}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -2,45 +2,134 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export default function CtaSection() {
   return (
-    <section className="relative py-32 md:py-44 px-6 overflow-hidden flex items-center justify-center text-center">
-      {/* Cinematic Background */}
-      <div className="absolute inset-0 z-0">
+    <section
+      style={{
+        position: "relative",
+        padding: "clamp(96px, 14vw, 176px) clamp(20px, 3.4vw, 52px)",
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+      }}
+    >
+      {/* Background image */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1920&q=80&auto=format&fit=crop"
           alt="Ancient Palace at Dusk"
-          className="w-full h-full object-cover filter brightness-[0.4] contrast-[1.1]"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "brightness(0.4) contrast(1.1)",
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#101B2B] via-[#101B2B]/70 to-[#101B2B]" />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to top, var(--ink) 0%, rgba(11,16,19,0.7) 50%, var(--ink) 100%)",
+          }}
+        />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto space-y-8">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#B99A65]/40 bg-black/50 backdrop-blur-md text-[#D9C7AC] text-xs font-mono uppercase tracking-widest">
-          <Sparkles className="w-3.5 h-3.5 text-[#B99A65]" />
+      <div
+        style={{
+          position: "relative",
+          zIndex: 10,
+          maxWidth: 720,
+          display: "flex",
+          flexDirection: "column",
+          gap: 28,
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "6px 16px",
+            borderRadius: 999,
+            border: "1px solid rgba(185,154,101,0.4)",
+            background: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(10px)",
+            color: "var(--muted)",
+            fontSize: 12,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+          }}
+        >
+          <span style={{ color: "#B99A65" }}>✦</span>
           <span>Begin Your Heritage Chapter</span>
         </div>
 
-        <h2 className="text-4xl sm:text-6xl md:text-7xl font-normal font-['Playfair_Display'] text-[#F5F0E7] leading-tight">
+        <h2
+          style={{
+            fontSize: "clamp(2.25rem, 6vw, 4.5rem)",
+            fontWeight: 400,
+            lineHeight: 1.1,
+            color: "var(--text)",
+          }}
+        >
           Every Journey{" "}
-          <span className="italic font-['Cormorant_Garamond'] text-[#B99A65] font-light">
+          <span style={{ fontStyle: "italic", color: "#B99A65", fontWeight: 300 }}>
             Has a Story.
           </span>
         </h2>
 
-        <p className="text-base sm:text-lg text-[#D9C7AC]/90 font-light font-['Manrope'] max-w-2xl mx-auto leading-relaxed">
-          Discover the places that shaped history. Create memories along the way. And travel with the confidence of intelligent telemetry.
+        <p
+          style={{
+            fontSize: 16,
+            color: "var(--muted)",
+            fontWeight: 300,
+            lineHeight: 1.65,
+            maxWidth: 520,
+          }}
+        >
+          Discover the places that shaped history. Create memories along the way. And travel with
+          the confidence of intelligent telemetry.
         </p>
 
-        <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+        <div style={{ paddingTop: 8 }}>
           <Link
             href="/signup"
-            className="px-10 py-4 rounded-full btn-luxury-gold flex items-center gap-3 text-xs shadow-2xl active:scale-95 group font-['Manrope']"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "16px 40px",
+              borderRadius: 999,
+              background: "#B99A65",
+              color: "#0b1013",
+              fontSize: 14,
+              fontWeight: 500,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              textDecoration: "none",
+              transition: "background 0.25s, transform 0.25s",
+              boxShadow: "0 8px 30px rgba(185,154,101,0.4)",
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement;
+              el.style.background = "#caa974";
+              el.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement;
+              el.style.background = "#B99A65";
+              el.style.transform = "";
+            }}
           >
             <span>Start Your Journey</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight style={{ width: 16, height: 16 }} />
           </Link>
         </div>
       </div>

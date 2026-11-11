@@ -534,3 +534,160 @@ h1, h2, h3, h4 {
 ::-webkit-scrollbar-track { background: #101B2B; }
 ::-webkit-scrollbar-thumb { background: rgba(185, 154, 101, 0.3); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #B99A65; }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   WanderLens Design System — Phase 1 Foundations
+   Added tokens, scoped reset, keyframes, and reduced-motion block.
+   All existing rules above are UNCHANGED.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── New Design-System Tokens (Phase 3 spec, exact values) ──────── */
+/* Added alongside existing tokens; existing names untouched.          */
+:root {
+  /* Core palette */
+  --ink:    #0b1013;
+  --panel:  rgba(14, 19, 23, 0.84);
+  --line:   rgba(255, 255, 255, 0.08);
+  --hover:  rgba(255, 255, 255, 0.065);
+  --text:   #ffffff;
+  --soft:   rgba(255, 255, 255, 0.74);   /* idle nav links */
+  --muted:  rgba(255, 255, 255, 0.60);   /* descriptions */
+
+  /* Animation */
+  --ease:   cubic-bezier(0.22, 1, 0.36, 1);
+  --morph:  0.5s;
+
+  /* Emergency — RESERVED for SOS and destructive actions only.
+     Never use as a general accent so emergency UI stays instantly
+     recognisable. */
+  --danger: #DC2626;
+  --danger-hover: #EF4444;
+
+  /* Geist font (exposed by next/font via layout.tsx) */
+  /* --font-geist is set on <html> by next/font; reference it here: */
+  --font-geist-stack: var(--font-geist, "Inter", system-ui, sans-serif);
+}
+
+/* ─── Scoped reset — only inside .wl-scope ───────────────────────── */
+/* Applied to <header id="header"> and .hero via .wl-scope.           */
+/* Does NOT bleed into existing pages or the body.                     */
+.wl-scope *,
+.wl-scope *::before,
+.wl-scope *::after {
+  box-sizing: border-box;
+}
+
+.wl-scope a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.wl-scope button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.wl-scope img {
+  display: block;
+}
+
+.wl-scope :focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ─── Keyframes (global — only activated when referenced) ─────────── */
+
+@keyframes heroIn {
+  from {
+    transform: scale(1.08);
+    filter: brightness(0.6);
+  }
+  to {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Scroll cue: fades up from 10px below final position */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Logo / actions entrance: drop down from -8px */
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Nav links entrance: opacity only (no transform — transform on the
+   nav breaks the dropdown's containing block per spec) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  /* to is implicit (opacity: 1) */
+}
+
+/* ─── Reduced Motion ──────────────────────────────────────────────── */
+/* When the user prefers reduced motion:
+   - Collapse all new design-system animation durations to near-zero.
+   - Remove blur filters from dropdown panels and discover media images.
+   Existing Framer Motion components handle their own reduced-motion
+   via their own media queries; this block covers only the new CSS. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --morph: 0.01s;
+  }
+
+  @keyframes heroIn {
+    from { transform: scale(1); filter: brightness(1); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 1; transform: translate(-50%, 0); }
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 1; }
+  }
+
+  /* Collapse all new animation durations to near-zero */
+  .wl-scope * {
+    animation-duration: 0.01s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01s !important;
+  }
+
+  /* Remove blur filters on new dropdown panels and media images
+     (these classes will be used by SiteHeader in Phase 2) */
+  .dd,
+  .panel,
+  .d-media img {
+    filter: none !important;
+    -webkit-filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}

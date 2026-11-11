@@ -7,122 +7,335 @@ import { Users, Radio, Bell, ArrowRight } from "lucide-react";
 
 export default function GroupExperienceSection() {
   return (
-    <section id="group-experience" className="theme-section-dark py-28 md:py-36 px-6 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          {/* Left Column: Editorial Copy */}
-          <div className="lg:col-span-6 space-y-6 order-2 lg:order-1">
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-px bg-[#B99A65]" />
-              <span className="text-[11px] font-bold tracking-[0.25em] text-[#B99A65] uppercase font-['Manrope']">
+    <section
+      id="group-experience"
+      style={{
+        background: "var(--ink)",
+        color: "var(--text)",
+        padding: "clamp(80px, 10vw, 144px) clamp(20px, 3.4vw, 52px)",
+        position: "relative",
+        overflow: "hidden",
+        borderTop: "1px solid var(--line)",
+      }}
+    >
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+            gap: "clamp(48px, 6vw, 80px)",
+            alignItems: "center",
+          }}
+        >
+          {/* Left: Editorial copy */}
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: 24, order: 2 }}
+            className="group-copy-col"
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 32, height: 1, background: "#B99A65", display: "block" }} />
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.25em",
+                  color: "#B99A65",
+                  textTransform: "uppercase",
+                }}
+              >
                 Group Travel Mode
               </span>
             </div>
 
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-normal font-['Playfair_Display'] text-[#F5F0E7] leading-tight">
+            <h2
+              style={{
+                fontSize: "clamp(2rem, 5vw, 3.5rem)",
+                fontWeight: 400,
+                lineHeight: 1.15,
+                color: "var(--text)",
+              }}
+            >
               Together Is a Better{" "}
-              <span className="italic font-['Cormorant_Garamond'] text-[#00C9A7] font-light">
+              <span style={{ fontStyle: "italic", color: "#00C9A7", fontWeight: 300 }}>
                 Way to Explore.
               </span>
             </h2>
 
-            <p className="text-base sm:text-lg text-[#D9C7AC]/90 font-light font-['Manrope'] leading-relaxed">
-              Travel together, stay connected and experience every destination without losing sight of your group.
+            <p style={{ fontSize: 17, color: "var(--soft)", fontWeight: 300, lineHeight: 1.65 }}>
+              Travel together, stay connected and experience every destination without losing sight
+              of your group.
             </p>
 
-            <ul className="space-y-3.5 text-xs sm:text-sm text-[#D9C7AC]/80 pt-2 font-light font-['Manrope']">
-              <li className="flex items-center gap-3">
-                <Users className="w-4 h-4 text-[#00C9A7] flex-shrink-0" />
-                <span>Real-time multi-user location synchronization with low-latency Supabase channels.</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Radio className="w-4 h-4 text-[#00C9A7] flex-shrink-0" />
-                <span>Active member roster with instant online/offline indicators and status badges.</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Bell className="w-4 h-4 text-[#00C9A7] flex-shrink-0" />
-                <span>One-touch broadcast alerts to the entire group or private member pings.</span>
-              </li>
+            <ul style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 8 }}>
+              {[
+                {
+                  Icon: Users,
+                  text: "Real-time multi-user location synchronization with low-latency Supabase channels.",
+                },
+                {
+                  Icon: Radio,
+                  text: "Active member roster with instant online/offline indicators and status badges.",
+                },
+                {
+                  Icon: Bell,
+                  text: "One-touch broadcast alerts to the entire group or private member pings.",
+                },
+              ].map(({ Icon, text }) => (
+                <li
+                  key={text}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    fontSize: 14,
+                    color: "var(--soft)",
+                  }}
+                >
+                  <Icon style={{ width: 15, height: 15, color: "#00C9A7", flexShrink: 0 }} />
+                  <span>{text}</span>
+                </li>
+              ))}
             </ul>
 
-            <div className="pt-4">
+            <div style={{ paddingTop: 8 }}>
               <Link
                 href="/groups"
-                className="px-8 py-4 rounded-full btn-luxury-gold flex items-center gap-3 text-xs shadow-xl active:scale-95 group w-fit"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "14px 32px",
+                  borderRadius: 999,
+                  background: "#B99A65",
+                  color: "#0b1013",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  transition: "background 0.25s, transform 0.25s",
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement;
+                  el.style.background = "#caa974";
+                  el.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement;
+                  el.style.background = "#B99A65";
+                  el.style.transform = "";
+                }}
               >
                 <span>Explore Group Mode</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight style={{ width: 15, height: 15 }} />
               </Link>
             </div>
           </div>
 
-          {/* Right Column: Shared Map & Member Preview */}
-          <div className="lg:col-span-6 relative order-1 lg:order-2">
-            <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/20 aspect-[4/3] relative bg-[#0E1522] p-4 flex flex-col justify-between">
+          {/* Right: Shared map preview — all Framer Motion animations unchanged */}
+          <div style={{ position: "relative", order: 1 }} className="group-map-col">
+            <div
+              style={{
+                borderRadius: 16,
+                overflow: "hidden",
+                border: "1px solid var(--line)",
+                aspectRatio: "4/3",
+                position: "relative",
+                background: "#0E1522",
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                boxShadow: "0 30px 60px rgba(0,0,0,0.5)",
+              }}
+            >
               {/* Simulated Map Header */}
-              <div className="flex items-center justify-between z-10">
-                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[11px] text-[#00C9A7] font-mono">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 10 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 14px",
+                    borderRadius: 999,
+                    background: "rgba(0,0,0,0.6)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid var(--line)",
+                    fontSize: 11,
+                    color: "#00C9A7",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "#34d399",
+                      display: "inline-block",
+                    }}
+                    className="animate-pulse"
+                  />
                   <span>3 Members Synchronized · Delhi Heritage Corridor</span>
                 </div>
               </div>
 
-              {/* Animated Map Markers Gliding across preview */}
-              <div className="relative w-full h-44 my-auto flex items-center justify-center">
-                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#B99A65_1px,transparent_1px)] [background-size:16px_16px]" />
+              {/* Animated map markers — Framer Motion animations preserved exactly */}
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "auto 0",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    opacity: 0.2,
+                    backgroundImage: "radial-gradient(#B99A65 1px, transparent 1px)",
+                    backgroundSize: "16px 16px",
+                  }}
+                />
 
                 {/* Member 1: Alice */}
                 <motion.div
-                  animate={{
-                    x: [0, 40, 10, 0],
-                    y: [0, -20, 15, 0],
-                  }}
+                  animate={{ x: [0, 40, 10, 0], y: [0, -20, 15, 0] }}
                   transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute top-10 left-16 flex items-center gap-1.5"
+                  style={{
+                    position: "absolute",
+                    top: "40%",
+                    left: "25%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
                 >
-                  <div className="w-7 h-7 rounded-full bg-[#6C63FF] border-2 border-white flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "#6C63FF",
+                      border: "2px solid #fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: "#fff",
+                    }}
+                  >
                     A
                   </div>
-                  <span className="text-[10px] font-mono text-white/80 bg-black/60 px-1.5 py-0.5 rounded">
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: "rgba(255,255,255,0.8)",
+                      background: "rgba(0,0,0,0.6)",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                  >
                     Alice
                   </span>
                 </motion.div>
 
                 {/* Member 2: Bob */}
                 <motion.div
-                  animate={{
-                    x: [0, -30, 20, 0],
-                    y: [0, 25, -10, 0],
-                  }}
+                  animate={{ x: [0, -30, 20, 0], y: [0, 25, -10, 0] }}
                   transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  className="absolute bottom-10 right-20 flex items-center gap-1.5"
+                  style={{
+                    position: "absolute",
+                    bottom: "30%",
+                    right: "20%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
                 >
-                  <div className="w-7 h-7 rounded-full bg-[#00C9A7] border-2 border-white flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "#00C9A7",
+                      border: "2px solid #fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: "#fff",
+                    }}
+                  >
                     B
                   </div>
-                  <span className="text-[10px] font-mono text-white/80 bg-black/60 px-1.5 py-0.5 rounded">
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: "rgba(255,255,255,0.8)",
+                      background: "rgba(0,0,0,0.6)",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                  >
                     Bob
                   </span>
                 </motion.div>
 
                 {/* Member 3: You */}
-                <div className="absolute center flex items-center gap-1.5">
+                <div style={{ position: "absolute", display: "flex", alignItems: "center", gap: 6 }}>
                   <div className="pulse-user-pin" />
-                  <span className="text-[10px] font-mono text-[#B99A65] bg-black/70 px-2 py-0.5 rounded font-bold border border-[#B99A65]/40">
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: "#B99A65",
+                      background: "rgba(0,0,0,0.7)",
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      fontWeight: 700,
+                      border: "1px solid rgba(185,154,101,0.4)",
+                    }}
+                  >
                     You
                   </span>
                 </div>
               </div>
 
-              {/* Bottom Telemetry Bar */}
-              <div className="z-10 p-3 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-between text-[11px] text-white/70 font-mono">
+              {/* Bottom telemetry bar */}
+              <div
+                style={{
+                  zIndex: 10,
+                  padding: "12px 16px",
+                  borderRadius: 10,
+                  background: "rgba(0,0,0,0.6)",
+                  backdropFilter: "blur(10px)",
+                  border: "1px solid var(--line)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  fontSize: 11,
+                  color: "var(--muted)",
+                }}
+              >
                 <span>Broadcast Channel: trek-crew-delhi</span>
-                <span className="text-emerald-400">Latency &lt; 200ms</span>
+                <span style={{ color: "#34d399" }}>Latency &lt; 200ms</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (min-width: 1024px) {
+          .group-copy-col { order: 1 !important; }
+          .group-map-col  { order: 2 !important; }
+        }
+      `}</style>
     </section>
   );
 }

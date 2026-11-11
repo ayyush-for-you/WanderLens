@@ -13,70 +13,118 @@ import {
   MapPin,
 } from "lucide-react";
 
+// ── Data unchanged ──────────────────────────────────────────────────────────
 const SAFETY_PILLARS = [
   {
     icon: AlertOctagon,
     title: "Emergency SOS",
     color: "#E76F51",
-    description: "1-second press-and-hold distress trigger broadcasts your exact GPS coordinates to nearby users within 2 km and stores to audit log.",
+    description:
+      "1-second press-and-hold distress trigger broadcasts your exact GPS coordinates to nearby users within 2 km and stores to audit log.",
   },
   {
     icon: Radio,
     title: "Real-Time Location Sharing",
     color: "#00C9A7",
-    description: "Encrypted WebSocket streams share your movement strictly within active group rooms — zero location leaks to non-members.",
+    description:
+      "Encrypted WebSocket streams share your movement strictly within active group rooms — zero location leaks to non-members.",
   },
   {
     icon: Users,
     title: "Group Member Tracking",
     color: "#759BB7",
-    description: "Keep visual contact with your travel party across crowded bazaars, remote ruins, and expansive temple corridors.",
+    description:
+      "Keep visual contact with your travel party across crowded bazaars, remote ruins, and expansive temple corridors.",
   },
   {
     icon: Bell,
     title: "Priority Emergency Alerts",
     color: "#B99A65",
-    description: "Instant broadcast alerts for emergency gatherings, regroup pings, or private direct member pings.",
+    description:
+      "Instant broadcast alerts for emergency gatherings, regroup pings, or private direct member pings.",
   },
   {
     icon: MapPin,
     title: "Location Awareness",
     color: "#A3B5A0",
-    description: "Orient your position on dark Google Maps, tracking your distance from known heritage coordinates.",
+    description:
+      "Orient your position on dark Google Maps, tracking your distance from known heritage coordinates.",
   },
   {
     icon: Lock,
     title: "Cloud RBAC & PostGIS",
     color: "#D9C7AC",
-    description: "Enterprise data protection with Row-Level Security, parameterized PostGIS geospatial queries, and bcrypt password hashing.",
+    description:
+      "Enterprise data protection with Row-Level Security, parameterized PostGIS geospatial queries, and bcrypt password hashing.",
   },
 ];
 
 export default function TravelSafetySection() {
   return (
-    <section id="travel-safety" className="theme-section-charcoal py-28 md:py-36 px-6 relative overflow-hidden border-t border-white/10">
-      <div className="max-w-7xl mx-auto space-y-16">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#E76F51]/30 bg-[#E76F51]/10 text-[#E76F51] text-[11px] font-bold tracking-widest uppercase font-mono">
-            <Shield className="w-3.5 h-3.5" />
+    <section
+      id="travel-safety"
+      style={{
+        background: "#0d1114",
+        color: "var(--text)",
+        padding: "clamp(80px, 10vw, 144px) clamp(20px, 3.4vw, 52px)",
+        position: "relative",
+        overflow: "hidden",
+        borderTop: "1px solid var(--line)",
+      }}
+    >
+      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", flexDirection: "column", gap: 64 }}>
+        {/* Section header */}
+        <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 14px",
+              borderRadius: 999,
+              border: "1px solid rgba(220,38,38,0.3)",
+              background: "rgba(220,38,38,0.1)",
+              color: "var(--danger)",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              alignSelf: "center",
+            }}
+          >
+            <Shield style={{ width: 13, height: 13 }} />
             <span>Intelligent Safety Architecture</span>
           </div>
 
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-normal font-['Playfair_Display'] text-[#F5F0E7] leading-tight">
+          <h2
+            style={{
+              fontSize: "clamp(2rem, 5vw, 3.5rem)",
+              fontWeight: 400,
+              lineHeight: 1.15,
+              color: "var(--text)",
+            }}
+          >
             Explore Freely.{" "}
-            <span className="italic font-['Cormorant_Garamond'] text-[#E76F51] font-light">
+            <span style={{ fontStyle: "italic", color: "#E76F51", fontWeight: 300 }}>
               Travel Confidently.
             </span>
           </h2>
 
-          <p className="text-sm sm:text-base text-[#D9C7AC]/80 font-light font-['Manrope'] leading-relaxed">
-            Exploration and personal safety belong together. WanderLens protects independent and group travelers through a sophisticated telemetry net that never intrudes until you need it.
+          <p style={{ fontSize: 15, color: "var(--muted)", fontWeight: 300, lineHeight: 1.65 }}>
+            Exploration and personal safety belong together. WanderLens protects independent and
+            group travelers through a sophisticated telemetry net that never intrudes until you
+            need it.
           </p>
         </div>
 
-        {/* 6 Safety Pillars Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Safety pillars grid — Framer Motion whileInView unchanged */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+            gap: 20,
+          }}
+        >
           {SAFETY_PILLARS.map((pillar, idx) => {
             const Icon = pillar.icon;
             return (
@@ -86,51 +134,150 @@ export default function TravelSafetySection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="luxury-glass-dark p-6 rounded-2xl border border-white/10 hover:border-[#B99A65]/40 transition-all flex flex-col justify-between group"
+                style={{
+                  background: "var(--panel)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  border: "1px solid var(--line)",
+                  borderRadius: 14,
+                  padding: 24,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  transition: "border-color 0.25s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor =
+                    "rgba(185,154,101,0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor = "var(--line)";
+                }}
               >
                 <div>
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: `${pillar.color}20`, color: pillar.color }}
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 16,
+                      background: `${pillar.color}20`,
+                      color: pillar.color,
+                    }}
                   >
-                    <Icon className="w-6 h-6" />
+                    <Icon style={{ width: 22, height: 22 }} />
                   </div>
-                  <h3 className="text-lg font-bold font-['Playfair_Display'] text-white mb-2">
+                  <h3
+                    style={{
+                      fontSize: 17,
+                      fontWeight: 500,
+                      color: "var(--text)",
+                      marginBottom: 8,
+                    }}
+                  >
                     {pillar.title}
                   </h3>
-                  <p className="text-xs text-[#D9C7AC]/70 font-light leading-relaxed font-['Manrope']">
+                  <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6, fontWeight: 300 }}>
                     {pillar.description}
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-white/40">
+                <div
+                  style={{
+                    marginTop: 20,
+                    paddingTop: 12,
+                    borderTop: "1px solid var(--line)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    fontSize: 10,
+                    color: "var(--muted)",
+                  }}
+                >
                   <span>Pillar 0{idx + 1}</span>
-                  <span className="text-emerald-400">Active Node</span>
+                  <span style={{ color: "#34d399" }}>Active Node</span>
                 </div>
               </motion.div>
             );
           })}
         </div>
 
-        {/* Simulated Emergency Command Banner */}
-        <div className="p-8 rounded-3xl luxury-glass-dark border border-[#E76F51]/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#E76F51]/20 border border-[#E76F51]/40 flex items-center justify-center text-[#E76F51] flex-shrink-0 animate-pulse">
-              <AlertOctagon className="w-6 h-6" />
+        {/* Emergency command banner */}
+        <div
+          style={{
+            padding: "32px",
+            borderRadius: 16,
+            background: "var(--panel)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: "1px solid rgba(220,38,38,0.3)",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 24,
+            boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: "rgba(220,38,38,0.15)",
+                border: "1px solid rgba(220,38,38,0.4)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--danger)",
+                flexShrink: 0,
+              }}
+              className="animate-pulse"
+            >
+              <AlertOctagon style={{ width: 22, height: 22 }} />
             </div>
             <div>
-              <div className="text-sm font-bold font-['Playfair_Display'] text-white">
+              <div style={{ fontSize: 15, fontWeight: 500, color: "var(--text)", marginBottom: 4 }}>
                 Emergency SOS Dispatch Net
               </div>
-              <div className="text-xs text-[#D9C7AC]/70 font-['Manrope']">
-                Rate-limited to 3 triggers per hour to prevent accidental misuse. Protected by database audit logs.
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>
+                Rate-limited to 3 triggers per hour to prevent accidental misuse. Protected by
+                database audit logs.
               </div>
             </div>
           </div>
 
           <Link
             href="/sos"
-            className="px-6 py-2.5 rounded-full bg-[#E76F51] hover:bg-[#d65f42] text-white text-xs font-bold font-['Manrope'] uppercase tracking-wider flex items-center gap-2 shadow-lg transition-transform active:scale-95"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 24px",
+              borderRadius: 999,
+              background: "#E76F51",
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              textDecoration: "none",
+              transition: "background 0.25s, transform 0.25s",
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement;
+              el.style.background = "#d65f42";
+              el.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement;
+              el.style.background = "#E76F51";
+              el.style.transform = "";
+            }}
           >
             <span>Test SOS Safety Mode</span>
           </Link>
