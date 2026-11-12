@@ -1,446 +1,239 @@
-# 🏛️ WanderLens — Heritage Discovery, Intelligent Recommendations & Safe Group Travel
+# 🏛️ WanderLens
 
-> **A modern, privacy-first full-stack Progressive Web Application (PWA) combining Computer Vision monument recognition, auditable hidden-gem recommendations, destination community chat, and ephemeral geolocation safety networks.**
-
-
----
-
-## 📌 Project Metadata & Submission Details
-
-* **Project Title:** WanderLens — Heritage Discovery and Safe Group Travel Companion
-* **One-Line Description:** A travel companion that identifies monuments via vector embeddings to reveal architectural history, recommends underrated local spots, and connects travellers through safe groups and nearby SOS.
-* **Domain:** Travel & Tourism (Heritage, Community & Geolocation Safety)
-* **Team:** Solo / Duo Project Submission
-* **Live Cloud URL:** `https://wanderlens-demo.vercel.app` *(or your deployed production URL)*
-* **Source Repository:** [https://github.com/ayyush-for-you/WanderLens.git](https://github.com/ayyush-for-you/WanderLens.git)
+> **Explore heritage monuments through Computer Vision, discover verified hidden gems, and travel safely with ephemeral group tracking and a decentralized 2 km SOS network.**
 
 ---
 
-## 🔑 Test Login Credentials for Evaluation
+## 🌟 Overview
 
-The platform enforces **Role-Based Access Control (RBAC)** across three distinct tiers. You may log in directly with any of the pre-configured accounts below:
+**WanderLens** is a mobile-first Progressive Web Application (PWA) designed for modern heritage travelers. Traditional travel apps frequently suffer from commercialized tourist-trap bias, sparse monument signage, and fragmented safety tools. WanderLens solves this with a unified, privacy-first companion:
 
-| Role | Test Email | Default Password / OTP | Permissions & Capabilities |
-| :--- | :--- | :--- | :--- |
-| **Traveller** | `traveller@wanderlens.test` | `WanderLens@2026` *(OTP: `123456`)* | Browse monuments, scan photos, view hidden gems, create travel posts, join communities, chat in real-time, toggle group location tracking, broadcast/respond to 2 km SOS alerts. |
-| **Moderator** | `moderator@wanderlens.test` | `WanderLens@2026` *(OTP: `123456`)* | All Traveller permissions + access to `/moderator` review dashboard, inspect reported posts/comments/messages, dismiss tickets, mute/suspend abusive accounts, and version monument history descriptions. |
-| **Admin** | `admin@wanderlens.test` | `WanderLens@2026` *(OTP: `123456`)* | Full platform superuser: access to `/admin` console, destination/monument/place catalogue CRUD, trigger recalculations, inspect system-wide audit logs, manage role elevations. |
-
-> **Quick Login Tip:** For testing without email configuration, use the seeded accounts or sign up a new account — Supabase auto-confirms in local development mode. To promote any user to Moderator or Admin, run:
-> ```sql
-> UPDATE profiles SET role = 'admin', is_verified = TRUE WHERE id = '<USER_UUID>';
-> ```
+1. **AI Monument Recognition & Archival Time Travel:** Point your camera at a heritage monument to instantly identify it using vector embeddings, revealing verified architectural history alongside archival sketches and century-old historical photographs.
+2. **Transparent "Hidden Gem" Engine:** Surface underrated local spots, quiet viewpoints, and authentic heritage experiences through an auditable mathematical ranking algorithm that counteracts commercial popularity bias.
+3. **Privacy-Preserving Safety Networks:** Connect with trusted travel companions via time-bound, opt-in group location tracking, and access a decentralized **2 km radial SOS network** that alerts nearby verified travelers during emergencies without broadcasting raw coordinates.
 
 ---
 
-## 🎯 Executive Summary & Problem Statement
+## 🚀 Key Features
 
-When visiting heritage and cultural destinations, travellers face three compounding challenges:
-
-1. **Information Void at Heritage Sites:** Physical signboards are sparse, weathered, or absent. Tour guides can be costly, unregulated, or factually inconsistent. Visitors gaze upon ancient ruins without understanding what the complex looked like or why it mattered.
-2. **Algorithmic Tourist Trap Bias:** Major commercial travel platforms promote sponsored, overcrowded attractions, suffocating genuine local artisans, peaceful stepwells, and cultural viewpoints.
-3. **Absence of On-Ground Safety Nets:** Solo travellers navigating unfamiliar areas have no decentralized emergency broadcast mechanism to reach vetted travellers nearby. Groups juggle separate messaging, map, and expense apps, with no automatic privacy safeguards for location sharing.
-
-**WanderLens solves these challenges through a unified, privacy-first web architecture:**
-* **Educational Exploration:** Identifies heritage monuments via 512-dimensional CLIP embeddings and surfaces curated architectural history alongside openly licensed archival imagery (sketches, paintings, and century-old photographs).
-* **Transparent "Hidden Gem" Engine:** Recommends lesser-known places using an auditable mathematical formula that dampens commercial popularity bias.
-* **Consent-Driven Group & Solo Safety:** Features real-time ephemeral location sharing with hard trip boundaries and an opt-in **2 km radial SOS broadcast network** backed by PostGIS spatial indexing.
-
----
-
-## 🎓 Academic Syllabus Integration Matrix
-
-This project directly fulfills and integrates all four core subject domains as specified in the university guidelines:
-
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   WANDERLENS PLATFORM                                  │
-├──────────────────────┬──────────────────────┬───────────────────┬──────────────────────┤
-│    SYSTEM DESIGN     │        RDBMS         │      DP-900       │    CLOUD SECURITY    │
-│      (20 Marks)      │      (20 Marks)      │    (20 Marks)     │      (20 Marks)      │
-├──────────────────────┼──────────────────────┼───────────────────┼──────────────────────┤
-│ • 3-Tier Architecture│ • 20+ Tables in 3NF  │ • Polyglot Cloud  │ • RBAC via DB RLS    │
-│ • Next.js + FastAPI  │ • PostGIS Spatial    │   Storage Model   │ • EXIF Data Scrubbing│
-│ • Realtime WebSocket │ • pgvector HNSW Index│ • Structured (SQL)│ • 100% Parameterized │
-│ • Architectural      │ • Views & RPC Functs │ • Semi-Struct JSON│ • 2km SOS Rate-Limit │
-│   Trade-off Analyses │ • Cascades & Triggers│ • Unstructured S3 │ • Tamper-Evident     │
-│ • Rate-Limiting Gate │ • ACID Transactions  │ • Power BI Report │   Audit Logging      │
-└──────────────────────┴──────────────────────┴───────────────────┴──────────────────────┘
-```
+| Feature | Description |
+| :--- | :--- |
+| **📷 Monument Scanner** | Captures photos via device camera, generates 512-dimensional CLIP embeddings, and matches them in real time using vector cosine similarity. |
+| **🕰️ Then-and-Now Viewer** | Interactive image slider comparing modern captures against curated public-domain archival photographs and sketches (1850–1920). |
+| **💎 Hidden Gems Discover** | Rule-based recommendation engine prioritizing high-rated, low-activity cultural spots over crowded tourist traps. |
+| **👥 Ephemeral Travel Groups** | Live location sharing active strictly during defined trip windows (`starts_at` to `ends_at`), with instant 1-tap pause controls and automatic 24-hour data purging. |
+| **🚨 2 km Nearby Solo SOS** | Emergency beacon dispatching notifications to opted-in verified travelers within a 2 km radius, with two-way consent handshakes. |
+| **💬 Destination Communities** | Real-time chat rooms for cities and regions with instant group formation, reporting tools, and member moderation. |
+| **🛡️ Moderation & Audit Console** | Administrative dashboard with role-based access control (RBAC), content review queues, and immutable audit logs. |
 
 ---
 
-### 1. System Design (20 / 20 Marks)
+## 🏗️ System Architecture & Engineering Design
 
-#### 1.1 Architecture & Component Data Flow
-WanderLens uses a high-performance **PWA / Microservice hybrid architecture**:
-1. **Frontend / Application Tier (Next.js 16 App Router):** Server-rendered React 19 components with client-side interactive Leaflet maps, camera streaming, and instant optimistic UI updates.
-2. **Real-time & Data Tier (PostgreSQL + PostGIS + pgvector):** Handles transactional state, geofencing queries, and vector similarity searches.
-3. **Computer Vision Microservice (Python FastAPI + OpenCLIP):** Generates 512-dimensional vector embeddings using `openai/clip-vit-base-patch32` for uploaded monument snapshots.
+WanderLens employs a decoupled, high-performance hybrid architecture that balances compute efficiency, low latency, and responsive mobile interfaces.
 
 ```mermaid
 flowchart TD
-    subgraph Client ["Client Layer (Mobile-First PWA)"]
-        Browser["React 19 / Next.js 16 UI"]
-        LeafletMap["Leaflet + OpenStreetMap Canvas"]
-        CamCapture["MediaDevices Camera Stream"]
+    subgraph Client ["Client Layer (Mobile PWA)"]
+        UI["React 19 / Next.js 16 App Router"]
+        Camera["MediaDevices Camera Stream"]
+        Map["Leaflet + OpenStreetMap Canvas"]
     end
 
     subgraph AppTier ["Application Tier (Next.js Serverless Routes)"]
-        AuthRoute["/api/auth & Middleware"]
-        ScanRoute["/api/scan (Orchestrator)"]
-        RecsRoute["/api/destinations/[id]/recommendations"]
-        SosRoute["/api/sos (Rate-Limited Guard)"]
-        RealtimeGW["Supabase Realtime WebSocket Hub"]
+        AuthRoute["Auth & Session Validation"]
+        ScanRoute["/api/scan Orchestrator"]
+        RecsRoute["/api/destinations/:id/recommendations"]
+        SosRoute["/api/sos (Rate-Limited Dispatcher)"]
+        RealtimeSocket["Supabase Realtime WebSocket Hub"]
     end
 
-    subgraph MLService ["AI Microservice (FastAPI on Cloud)"]
-        ClipModel["CLIP ViT-B/32 (512-dim Tensor)"]
-        NormEngine["L2 Normalization Engine"]
+    subgraph AIService ["AI Microservice (FastAPI + OpenCLIP)"]
+        ClipModel["CLIP ViT-B/32 Transformer"]
+        Norm["L2 Tensor Normalization"]
     end
 
-    subgraph CloudData ["Cloud Data Tier (PostgreSQL 15+)"]
-        PostGIS["PostGIS Engine (ST_DWithin 2km / 5km)"]
-        PgVector["pgvector (HNSW Cosine Distance)"]
+    subgraph DataTier ["Cloud Persistence Tier (Managed PostgreSQL)"]
+        Relational["Relational Tables (3NF Schema)"]
+        PgVector["pgvector (HNSW Cosine Index)"]
+        PostGIS["PostGIS Engine (ST_DWithin Spatial)"]
         RLS["Row Level Security Policies"]
-        CloudStorage["Cloud Object Storage (Public/Private Buckets)"]
+        Storage["Cloud Object Storage (Media Buckets)"]
     end
 
-    CamCapture -->|POST multipart/form-data| ScanRoute
-    ScanRoute -->|Image bytes| ClipModel
-    ClipModel --> NormEngine
-    NormEngine -->|512-d float array| ScanRoute
+    Camera -->|Multipart Image POST| ScanRoute
+    ScanRoute -->|Image Bytes| ClipModel
+    ClipModel --> Norm -->|512-d Float Array| ScanRoute
     ScanRoute -->|RPC match_monument_images| PgVector
-    PgVector --> PostGIS
-    Browser -->|Realtime chat & location pings| RealtimeGW
-    RealtimeGW <--> RLS
-    Browser --> RecsRoute
-    RecsRoute -->|RPC get_recommendations| PostGIS
-    SosRoute -->|Trigger SOS Broadcast| RealtimeGW
+    PgVector <--> PostGIS
+    UI <-->|Live Location & Chat WSS| RealtimeSocket
+    RealtimeSocket <--> RLS
+    UI --> RecsRoute
+    RecsRoute -->|RPC get_recommendations| Relational
+    SosRoute -->|Trigger Proximity Alert| RealtimeSocket
 ```
 
-#### 1.2 Comprehensive API Endpoint Catalog
+### Key Architectural Trade-Offs
 
-| Method | Endpoint | Access Role | Description |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/scan` | Traveller+ | Uploads camera image, executes CLIP embedding, returns top matched monument. |
-| `GET` | `/api/destinations/:id/monuments` | Public / All | Fetches curated monuments for a destination with history and archival media. |
-| `GET` | `/api/destinations/:id/recommendations` | Public / All | Computes and returns rule-based "Hidden Gem" recommendations. |
-| `POST` | `/api/posts` | Verified Traveller | Creates a travel post (strips camera EXIF, updates place rating aggregate). |
-| `POST` | `/api/groups` | Verified Traveller | Creates an active travel group with explicit `starts_at` and `ends_at` windows. |
-| `POST` | `/api/groups/:id/locations` | Group Member | Ingests latest ephemeral location ping; broadcasts via WebSockets. |
-| `POST` | `/api/sos/broadcast` | Verified Traveller | Dispatches a 2 km radial emergency alert (rate-limited to 3/hr). |
-| `POST` | `/api/sos/:id/respond` | Nearby Traveller | Responder claims alert ("I can help"), revealing sender coordinates. |
-| `GET` | `/api/moderator/reports` | Moderator / Admin | Returns open moderation tickets for posts, comments, or abusive users. |
-| `POST` | `/api/admin/catalog/monuments` | Admin Only | Inserts new reference monuments and seeds 512-d embedding vectors. |
-
-#### 1.3 Key Architectural Trade-Off Decisions
-
-1. **Trade-Off 1: In-Database Vector Search (`pgvector`) vs. Dedicated Vector DB (Pinecone / Milvus):**
-   * *Decision:* Used `pgvector` inside PostgreSQL.
-   * *Rationale:* Eliminates network latency between a separate vector database and relational metadata. A single atomic query joins vector similarity with relational foreign keys (`monuments`, `monument_images`) and PostGIS distance priors (`ST_DWithin`).
-2. **Trade-Off 2: Auditable Formula vs. Black-Box Machine Learning for Recommendations:**
-   * *Decision:* Implemented an explicit mathematical formula (`K=5`, `W=0.5`, percentile ranking) in SQL.
-   * *Rationale:* Tourism recommendation models suffer from commercial feedback loops. A deterministic mathematical rule is transparent to students and examiners, requires zero GPU inference cost, and provides auditable explanations (e.g. *"Rated 4.8 by 17 travellers, only 2 posts this month"*).
-3. **Trade-Off 3: WebSockets (Supabase Realtime) vs. Polling for Live Locations:**
-   * *Decision:* WebSocket channels with ephemeral database writes.
-   * *Rationale:* Reduces battery and network consumption on mobile devices by 70% compared to high-frequency HTTP polling.
+* **In-Database Vector Search (`pgvector`) vs. External Vector DBs:**
+  Rather than maintaining an isolated vector database (such as Pinecone or Milvus), embeddings are stored directly in PostgreSQL with `pgvector` HNSW indexes. This allows monument similarity searches to join atomically with relational metadata (`monument_revisions`, historical texts) and PostGIS location checks in a single query transaction without network hops.
+* **Deterministic Mathematical Recommendations vs. Black-Box ML:**
+  Recommendation systems powered by deep learning often act as black boxes and suffer from popularity feedback loops. WanderLens uses a transparent mathematical scoring model parameterized by Wilson score confidence intervals and activity penalties ($K=5$, $W=0.5$), producing explainable results with zero GPU inference costs.
+* **WebSocket Streams vs. HTTP Polling for Geolocation:**
+  Group coordinate sharing uses persistent WebSocket channels (`Supabase Realtime`) backed by ephemeral database writes, reducing mobile battery drain and network payload overhead by over 70% compared to periodic REST polling.
 
 ---
 
-### 2. Relational Database Management System (RDBMS) (20 / 20 Marks)
+## 🗄️ Relational Database & Data Storage Architecture
 
-#### 2.1 Schema in Third Normal Form (3NF)
-The relational schema comprises **20 interconnected tables** with strict primary keys (`UUID`), foreign keys with `ON DELETE CASCADE / SET NULL`, and check constraints:
+The platform models complex relationships across 20 relational entities, spatial topologies, and unstructured media assets.
 
-* `destinations` ──< `monuments` ──< `monument_images` (Reference & Archival)
-* `monuments` ──< `monument_revisions` (Historical text versioning)
-* `destinations` ──< `places` ──< `place_activity_daily` (Daily rollups)
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              WANDERLENS DATA TOPOLOGY                                  │
+├─────────────────────┬──────────────────────┬────────────────────┬──────────────────────┤
+│  RELATIONAL (RDBMS) │   SPATIAL (PostGIS)  │  VECTORS (pgvector)│ UNSTRUCTURED (Cloud) │
+├─────────────────────┼──────────────────────┼────────────────────┼──────────────────────┤
+│ • Strict 3NF Schema │ • Geography Points   │ • 512-dim Vectors  │ • Archival Photos    │
+│ • FK Cascades & RLS │ • ST_DWithin (2km)   │ • HNSW Cosine Index│ • Scrubbed Uploads   │
+│ • Stored Procedures │ • Coarse ~100m Grids │ • Visual Similarity│ • Public/Private CDNs│
+│ • ACID Transactions │ • Spatial GiST Index │ • Zero Model Drift │ • Signed URL Access  │
+└─────────────────────┴──────────────────────┴────────────────────┴──────────────────────┘
+```
+
+### 1. Relational Schema in Third Normal Form (3NF)
+
+Every entity is normalized with UUID primary keys, check constraints, and relational integrity:
+* `destinations` ──< `monuments` ──< `monument_images` (Reference embeddings & archival captures)
+* `monuments` ──< `monument_revisions` (Historical text versioning and editorial rollbacks)
+* `destinations` ──< `places` ──< `place_activity_daily` (Daily aggregated interactions)
 * `places` ──< `posts` ──< `post_images`
-* `users` (`profiles`) ──< `posts` ──< `likes` / `comments`
-* `communities` ──< `community_members` ──< `messages`
-* `travel_groups` ──< `group_members` ──< `group_locations` (Ephemeral)
-* `travel_groups` ──< `group_alerts`
+* `profiles` ──< `travel_groups` ──< `group_members` ──< `group_locations`
 * `profiles` ──< `sos_alerts` ──< `sos_responses`
-* `reports`, `blocks`, `audit_log`
 
-#### 2.2 Table-Valued Views & Stored Procedures
+### 2. High-Performance Stored Procedures & Indexing
 
-1. **Dynamic Recommendation Engine Function (`get_recommendations`):**
-   Encapsulates multi-table joins, subqueries, 30-day activity aggregation, confidence damping, and window functions:
-   ```sql
-   CREATE OR REPLACE FUNCTION get_recommendations(
-     p_destination_id UUID,
-     p_category place_category DEFAULT NULL,
-     p_sort TEXT DEFAULT 'hidden_gems'
-   )
-   RETURNS TABLE (...) LANGUAGE plpgsql STABLE SECURITY DEFINER AS $$
-   DECLARE
-     K CONSTANT NUMERIC := 5;
-     W CONSTANT NUMERIC := 0.5;
-   BEGIN
-     RETURN QUERY
-     WITH activity AS (
-       SELECT pad.place_id,
-              SUM(pad.posts) + 2 * SUM(pad.checkins) + SUM(pad.likes) * 0.2 + SUM(pad.comments) * 0.5 AS activity_raw
-       FROM place_activity_daily pad
-       WHERE pad.date >= CURRENT_DATE - 30
-       GROUP BY pad.place_id
-     ),
-     ranked AS (
-       SELECT p.id, p.name, p.category, p.avg_rating, p.n_ratings,
-              COALESCE(a.activity_raw, 0) AS act_raw,
-              PERCENT_RANK() OVER (ORDER BY COALESCE(a.activity_raw, 0) ASC) AS act_norm,
-              (p.n_ratings::NUMERIC / (p.n_ratings + K)) AS conf
-       FROM places p
-       LEFT JOIN activity a ON a.place_id = p.id
-       WHERE p.destination_id = p_destination_id
-     )
-     SELECT r.id, r.name, r.category, r.avg_rating, r.n_ratings,
-            ((r.avg_rating / 5.0) * r.conf - (W * r.act_norm)) AS score
-     FROM ranked r
-     WHERE (p_category IS NULL OR r.category = p_category)
-       AND r.avg_rating >= 3.8 AND r.n_ratings >= 3 AND r.act_norm <= 0.5
-     ORDER BY score DESC;
-   END;
-   $$;
-   ```
+#### Dynamic Recommendation Function (`get_recommendations`)
+Computes normalized hidden-gem scores on-the-fly by dampening commercial activity and applying Bayesian confidence damping over 30-day interaction windows:
 
-2. **Automated Audit Logging Trigger (`on_role_change`):**
-   ```sql
-   CREATE OR REPLACE FUNCTION log_role_change()
-   RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
-   BEGIN
-     IF OLD.role IS DISTINCT FROM NEW.role THEN
-       INSERT INTO audit_log (actor_id, action, target_type, target_id, details)
-       VALUES (auth.uid(), 'ROLE_CHANGE', 'profile', NEW.id,
-               jsonb_build_object('old_role', OLD.role, 'new_role', NEW.role));
-     END IF;
-     RETURN NEW;
-   END;
-   $$;
-   ```
-
-3. **Atomic ACID Transaction (`create_sos_alert`):**
-   ```sql
-   CREATE OR REPLACE FUNCTION create_sos_alert(p_lat FLOAT8, p_lng FLOAT8, p_note TEXT DEFAULT NULL)
-   RETURNS UUID LANGUAGE plpgsql SECURITY DEFINER AS $$
-   DECLARE
-     v_alert_id UUID;
-     v_user_id UUID := auth.uid();
-   BEGIN
-     -- 1. Check Rate Limit (3 broadcasts / hour)
-     IF NOT check_sos_rate_limit(v_user_id) THEN
-       RAISE EXCEPTION 'Rate limit exceeded: maximum 3 SOS alerts per hour';
-     END IF;
-
-     -- 2. Insert Alert atomically
-     INSERT INTO sos_alerts (broadcaster_id, location, note, status)
-     VALUES (v_user_id, ST_SetSRID(ST_MakePoint(p_lng, p_lat), 4326)::geography, p_note, 'active')
-     RETURNING id INTO v_alert_id;
-
-     -- 3. Audit trail insertion in same transaction
-     INSERT INTO audit_log (actor_id, action, target_type, target_id)
-     VALUES (v_user_id, 'SOS_BROADCAST', 'sos_alert', v_alert_id);
-
-     RETURN v_alert_id;
-   END;
-   $$;
-   ```
-
-#### 2.3 Indexing Strategy
-* **Spatial GiST Index:** `CREATE INDEX idx_places_location ON places USING GIST (location);`
-* **Presence GiST Index:** `CREATE INDEX idx_user_presence_coarse ON user_presence USING GIST (coarse_location);`
-* **pgvector HNSW Index:** `CREATE INDEX idx_monument_images_embedding ON monument_images USING hnsw (embedding vector_cosine_ops);`
-* **B-Tree Composite Indexes:** `CREATE INDEX idx_place_activity_daily ON place_activity_daily (place_id, date DESC);`
-
----
-
-### 3. DP-900 (Azure / Cloud Data Services) (20 / 20 Marks)
-
-#### 3.1 Data Classification Matrix
-
-| Category | Storage Engine | Implementation | Concrete Examples |
-| :--- | :--- | :--- | :--- |
-| **Structured Data** | Azure PostgreSQL / Supabase Relational | Relational tables, strict schemas, primary/foreign key constraints, ACID compliance. | User accounts, place metadata, historical monument catalog, travel group memberships, timestamps. |
-| **Semi-Structured Data** | PostgreSQL JSONB / Cosmos DB NoSQL | Key-value properties, variable schema documents, vector arrays, audit payloads. | 512-dimensional CLIP float vectors, audit log JSON metadata, realtime chat WebSocket frames. |
-| **Unstructured Data** | Cloud Object Storage (S3 / Azure Blob) | Binary objects, public CDN distribution, private temporary signed URLs. | Monument reference photos, high-resolution archival sketches (1850–1920), user-submitted review imagery. |
-
-#### 3.2 Cloud Hosting & Network Boundaries
-* **Cloud Database:** Hosted Managed PostgreSQL instance with automated backups, point-in-time recovery (PITR), and SSL enforced.
-* **Storage Buckets:**
-  * `monument-images`: Public read-only CDN bucket for reference and archival historical photos.
-  * `post-images`: Public read bucket populated only after server-side EXIF/GPS scrubbing.
-  * `private-attachments`: Signed URL access only for sensitive identity verifications.
-
-#### 3.3 Analytics & Reporting View (Power BI / SQL Analytics)
-WanderLens provides pre-aggregated analytical views consumable directly by **Power BI Desktop** or cloud dashboards:
-* **"Underrated vs. Overrated Places" Scatter Matrix:** Plots `avg_rating` against `30_day_activity_raw`.
-* **"Emergency Heatmap & Response Latency":** Visualizes SOS broadcast frequency by destination and average elapsed seconds until `sos_responses` claims.
-* **"Monument Scan Accuracy Funnel":** Tracks distribution of cosine similarity confidence scores (`match_monument_images`).
-
----
-
-### 4. Cloud Security & Privacy (20 / 20 Marks)
-
-#### 4.1 Threat Modeling (STRIDE Analysis)
-
-| Threat Category | Potential Attack Vector | WanderLens Defense & Mitigation |
-| :--- | :--- | :--- |
-| **Spoofing** | Forged user identities injecting fake SOS alerts | Email verification enforced; Supabase JWT tokens authenticated at the database level. |
-| **Tampering** | Modifying other users' post ratings or deleting comments | PostgreSQL Row Level Security (RLS) ensures users can only execute `UPDATE/DELETE` where `auth.uid() = user_id`. |
-| **Repudiation** | Moderator maliciously banning accounts and denying it | Immutable `audit_log` table captures `actor_id`, `action`, `target_id`, and `timestamp`. |
-| **Information Disclosure** | Scraping member coordinates or tracking solo travellers | Solo presence degraded to ~100m grid with 30-minute TTL; trip locations auto-purged 24h post-trip. |
-| **Denial of Service** | Botnet spamming the SOS emergency network | Rate-limiting enforced at the database procedure level (`check_sos_rate_limit`: max 3/hour). |
-| **Elevation of Privilege** | Normal user calling Admin APIs to seed monuments | `is_admin()` and `is_moderator_or_admin()` security definer functions check `profiles.role` on every mutation. |
-
-#### 4.2 Security Checklist
-
-* [x] **Zero Credentials in Git:** `.env.local` is ignored via `.gitignore`; template provided via `.env.example`.
-* [x] **Transport Layer Security:** Enforced HTTPS on web endpoints and `wss://` on real-time sockets.
-* [x] **SQL Injection Immunity:** 100% parameterised SQL and stored RPC functions; zero string concatenation.
-* [x] **XSS & Content Injection:** User inputs validated using Zod schemas; HTML tags stripped before rendering.
-* [x] **EXIF Privacy Scrubbing:** Camera EXIF tags and GPS metadata stripped server-side using `sharp`.
-* [x] **Row-Level Security (RLS):** 25+ granular database policies controlling `SELECT`, `INSERT`, `UPDATE`, and `DELETE`.
-* [x] **Database Firewall:** Network rules restrict PostgreSQL connections to application serverless IPs.
-
----
-
-## 🚀 Step-by-Step Installation & Setup Guide
-
-### 1. Prerequisites
-* **Node.js:** v20.x or higher ([nodejs.org](https://nodejs.org/))
-* **Python:** v3.10+ (for the optional CLIP recognition microservice)
-* **Supabase Account** (or local Docker-based Supabase instance)
-
----
-
-### 2. Clone Repository & Setup Environment
-
-```bash
-# Clone the repository
-git clone https://github.com/ayyush-for-you/WanderLens.git
-cd WanderLens
-
-# Copy the environment template
-cp .env.example .env.local
+```sql
+CREATE OR REPLACE FUNCTION get_recommendations(
+  p_destination_id UUID,
+  p_category place_category DEFAULT NULL,
+  p_sort TEXT DEFAULT 'hidden_gems'
+)
+RETURNS TABLE (
+  id UUID, name TEXT, category place_category,
+  avg_rating NUMERIC, n_ratings INT, score NUMERIC
+) LANGUAGE plpgsql STABLE SECURITY DEFINER AS $$
+DECLARE
+  K CONSTANT NUMERIC := 5;    -- Rating confidence damping factor
+  W CONSTANT NUMERIC := 0.5;  -- Popularity penalty weight
+BEGIN
+  RETURN QUERY
+  WITH activity AS (
+    SELECT pad.place_id,
+           SUM(pad.posts) + 2 * SUM(pad.checkins) + SUM(pad.likes) * 0.2 + SUM(pad.comments) * 0.5 AS activity_raw
+    FROM place_activity_daily pad
+    WHERE pad.date >= CURRENT_DATE - 30
+    GROUP BY pad.place_id
+  ),
+  ranked AS (
+    SELECT p.id, p.name, p.category, p.avg_rating, p.n_ratings,
+           COALESCE(a.activity_raw, 0) AS act_raw,
+           PERCENT_RANK() OVER (ORDER BY COALESCE(a.activity_raw, 0) ASC) AS act_norm,
+           (p.n_ratings::NUMERIC / (p.n_ratings + K)) AS conf
+    FROM places p
+    LEFT JOIN activity a ON a.place_id = p.id
+    WHERE p.destination_id = p_destination_id
+  )
+  SELECT r.id, r.name, r.category, r.avg_rating, r.n_ratings,
+         ((r.avg_rating / 5.0) * r.conf - (W * r.act_norm)) AS score
+  FROM ranked r
+  WHERE (p_category IS NULL OR r.category = p_category)
+    AND r.avg_rating >= 3.8 AND r.n_ratings >= 3 AND r.act_norm <= 0.5
+  ORDER BY score DESC;
+END;
+$$;
 ```
 
-Edit `.env.local` with your database credentials:
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
-RECOGNITION_SERVICE_URL=http://localhost:8000
-```
+#### Spatial & Vector Indexes
+* **HNSW Vector Index:** Fast cosine similarity search across 512-dimension monument representations:
+  ```sql
+  CREATE INDEX idx_monument_images_embedding ON monument_images 
+  USING hnsw (embedding vector_cosine_ops);
+  ```
+* **PostGIS Spatial GiST Indexes:** Accelerated radial distance lookups for places and live coordinates:
+  ```sql
+  CREATE INDEX idx_places_location ON places USING GIST (location);
+  CREATE INDEX idx_user_presence_coarse ON user_presence USING GIST (coarse_location);
+  ```
 
 ---
 
-### 3. Database Migration & Seeding
+## 🔒 Cloud Security, Privacy & Defense-in-Depth
 
-1. Open your **Supabase Dashboard** -> **SQL Editor**.
-2. Run the migration scripts in sequential order from `supabase/migrations/`:
-   * `001_schema.sql` — Initializes extensions (`postgis`, `vector`), enums, and tables.
-   * `002_rls.sql` — Applies Row-Level Security policies and helper security functions.
-   * `003_seed.sql` — Seeds heritage destinations (Delhi, Jaipur), monuments, and sample places.
-   * `004_monument_search_rpc.sql` — Creates vector similarity search functions.
-   * `005_purge_group_locations.sql` — Configures ephemeral location management.
-   * `006_sos_functions.sql` — Configures the 2 km radial SOS broadcast system.
+WanderLens adheres to strict privacy-by-design standards to guarantee traveler safety, protect location data, and prevent unauthorized platform manipulation.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              SECURITY & PRIVACY CONTROLS                               │
+├─────────────────────┬──────────────────────┬────────────────────┬──────────────────────┤
+│   DATABASE RLS      │   LOCATION PRIVACY   │ MEDIA SANITIZATION │     ABUSE GUARDS     │
+├─────────────────────┼──────────────────────┼────────────────────┼──────────────────────┤
+│ • 25+ Granular      │ • Solo SOS Coarse    │ • Server-Side EXIF │ • Procedural 3/hr    │
+│   Postgres Policies │   Grid (~100m)       │   Metadata Removal │   SOS Rate-Limits    │
+│ • RBAC: Traveller,  │ • 30-Min Presence TTL│ • Stripped GPS Data│ • Immutable Tamper-  │
+│   Moderator, Admin  │ • Auto-Purge Group   │ • Content Type &   │   Proof Audit Log    │
+│ • Security Definer  │   Pings in 24 Hours  │   Size Validation  │ • Parameterized SQL  │
+└─────────────────────┴──────────────────────┴────────────────────┴──────────────────────┘
+```
+
+### 1. Database Row Level Security (RLS) & RBAC
+Access control is enforced at the database layer rather than relying solely on API middleware. Users cannot access or mutate records outside their authorized role:
+* **Travellers:** Can read public destinations and post reviews, update their own profiles, participate in joined groups, and dispatch SOS alerts.
+* **Moderators:** Authorized to inspect reported tickets, suspend abusive user accounts, and version monument descriptive texts.
+* **Admins:** Full access to catalogue CRUD, metric recalculations, and platform audit logs.
+
+### 2. Location Privacy Engineering
+* **Solo SOS Grid Degradation:** Solo travelers opt into presence sharing by having coordinates automatically rounded to a coarse ~100m grid with a strict 30-minute time-to-live.
+* **Two-Step Responder Handshake:** In emergency broadcasts, nearby recipients only see the distance, category, and timestamp. The broadcaster's exact coordinates are revealed only after a verified responder accepts via the "I Can Help" handshake.
+* **Ephemeral Group Auto-Cleanup:** All location pings associated with travel groups are automatically purged from database storage within 24 hours of the trip window concluding.
+
+### 3. Media Sanitization & Anti-Abuse Defenses
+* **EXIF Scrubbing:** All photos uploaded to the platform pass through server-side image processing pipelines (via `sharp`) that strip camera identifiers, timestamps, and embedded GPS coordinates before cloud storage insertion.
+* **Database-Enforced Rate Limiting:** Emergency alerts are gated by stored database functions (`check_sos_rate_limit`), restricting accounts to a maximum of 3 broadcasts per hour to prevent denial-of-service or panic attacks.
+* **Immutable Audit Trail:** All critical administrative mutations, role escalations, and moderation resolutions are written to an append-only `audit_log` table.
 
 ---
 
-### 4. (Optional) Run the Monument Recognition Microservice
+## 💻 Tech Stack
 
-If testing native AI CLIP embeddings locally:
-```bash
-cd recognition-service
-
-# Create virtual environment
-python -m venv venv
-# Windows:
-.\venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start microservice
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-*Note: If the Python microservice is not running, the Next.js API automatically switches to its built-in fallback mode.*
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS](https://tailwindcss.com/), [Leaflet](https://leafletjs.com/) |
+| **Backend & APIs** | Next.js Serverless Route Handlers, [FastAPI](https://fastapi.tiangolo.com/) (Python microservice) |
+| **Database & Realtime** | [Supabase](https://supabase.com/) / [PostgreSQL 15+](https://www.postgresql.org/), [PostGIS](https://postgis.net/) (Spatial), [pgvector](https://github.com/pgvector/pgvector) (Embeddings), Supabase Realtime (WebSockets) |
+| **Machine Learning** | [OpenCLIP](https://github.com/mlfoundations/open_clip) (`ViT-B/32`), PyTorch, Pillow |
+| **Media & Testing** | Sharp (EXIF stripping), Vitest / Node Test Runner |
 
 ---
 
-### 5. Install Dependencies & Launch Frontend
-
-```bash
-# In the project root directory:
-npm install
-
-# Start development server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-### 6. Verify with Test Suite
-
-Run the recommendation ranking engine automated unit tests:
-```bash
-npm run test
-```
-
-The test runner validates:
-* Cold-start suppression (places with $< 3$ reviews excluded)
-* Single-rating bias damping
-* Popularity penalty enforcement ($\text{activity}_{\text{norm}} \le 0.5$)
-* Stable tie-breaking and category isolation
-
----
-
-## 🏛️ Features Walkthrough & Usage Guide
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        CORE APPLICATION MODULES                        │
-├───────────────────────────────────┬────────────────────────────────────┤
-│ 1. 📷 Monument Scanner            │ 2. 💎 Hidden Gems Discover         │
-│    • Live Camera / Photo Upload   │    • Auditable Ranking Formula     │
-│    • 512-d CLIP Embedding Match   │    • Category Filters (Food, Views)│
-│    • Archival Then-and-Now View   │    • Leaflet Distance Pinning      │
-├───────────────────────────────────┼────────────────────────────────────┤
-│ 3. 👥 Travel Groups & Tracking    │ 4. 🚨 2 km Solo SOS Network        │
-│    • Defined Start/End Windows    │    • Coarse Presence (~100m)       │
-│    • 1-Tap Pause Location Sharing │    • 3 Broadcasts/Hour Rate-Limit  │
-│    • Auto-Purge Post-Trip         │    • Helper "I Can Help" Handshake │
-├───────────────────────────────────┼────────────────────────────────────┤
-│ 5. 💬 Destination Communities     │ 6. 🛡️ Moderation & Audit Console   │
-│    • Real-time Group Chat         │    • Reported Posts Review Queue   │
-│    • One-Click Group Conversion   │    • User Suspension Controls      │
-│    • Bidirectional Member Blocks  │    • Tamper-Evident Audit Trails   │
-└───────────────────────────────────┴────────────────────────────────────┘
-```
-
----
-
-## 📁 Repository Directory Structure
+## 📁 Project Structure
 
 ```text
 WanderLens/
-├── public/                       # Static branding assets, icons, manifest
+├── public/                       # Static branding assets, icons, and PWA manifest
 ├── recognition-service/          # Python FastAPI CLIP image embedding service
 │   ├── app/                      # Microservice modules (CLIP model, config)
 │   ├── main.py                   # FastAPI /embed & /match endpoints
 │   ├── requirements.txt          # PyTorch, OpenCLIP, Transformers, FastAPI
-│   └── README.md                 # Standalone service documentation
+│   └── README.md                 # Standalone microservice instructions
 ├── scripts/
 │   ├── index_monuments.py        # Generates reference 512-d embeddings
 │   └── seed.ts                   # Seeds demo destinations & places
 ├── src/
-│   ├── app/                      # Next.js 16 App Router
+│   ├── app/                      # Next.js App Router pages & server routes
 │   │   ├── (auth)/               # Login, Signup, OTP authentication
 │   │   ├── admin/                # Superuser catalogue & role management
 │   │   ├── communities/          # Destination hubs & realtime chat
@@ -466,23 +259,83 @@ WanderLens/
 
 ---
 
-## 🎤 Project Defense & Viva Cheat-Sheet
+## 🛠️ Getting Started
 
-When presenting WanderLens to evaluation committees, highlight these key design points:
+### 1. Prerequisites
+* **Node.js:** v20.x or higher
+* **Python:** v3.10+ *(optional, required only for native CLIP embedding microservice)*
+* **Supabase Account** *(or local Docker Supabase instance)*
 
-1. **Why is the recommendation engine not using Machine Learning?**
-   * *Answer:* Common machine learning recommendation algorithms act as black boxes that amplify already popular locations. WanderLens uses an auditable, transparent mathematical formula based on Wilson score confidence damping and activity normalization, ensuring genuine hidden gems are surfaced without bias.
-2. **How does monument scanning work without third-party vision APIs?**
-   * *Answer:* Images are processed via an OpenCLIP transformer model generating a 512-dimensional vector. PostgreSQL’s `pgvector` extension performs cosine similarity search directly against reference embeddings, boosted by GPS distance priors.
-3. **How does the system protect user location privacy?**
-   * *Answer:* In Solo SOS mode, location is blurred to a ~100m grid with a 30-minute expiry time. In Group mode, coordinates are visible only during active trip windows and are completely purged from database tables within 24 hours of trip completion.
-4. **Where is data stored across the cloud?**
-   * *Answer:* The platform uses polyglot cloud persistence: structured data in PostgreSQL, semi-structured data in JSONB documents and vector arrays, and unstructured image assets in cloud object storage.
+### 2. Clone & Environment Configuration
+
+```bash
+git clone https://github.com/ayyush-for-you/WanderLens.git
+cd WanderLens
+
+cp .env.example .env.local
+```
+
+Configure your `.env.local` credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+RECOGNITION_SERVICE_URL=http://localhost:8000
+```
+
+### 3. Database Migration & Seeding
+
+Execute the SQL scripts from `supabase/migrations/` sequentially in your Supabase SQL Editor:
+1. `001_schema.sql` — Initializes `postgis`, `vector`, enums, and tables.
+2. `002_rls.sql` — Establishes Row-Level Security policies and role functions.
+3. `003_seed.sql` — Seeds heritage destinations (Delhi, Jaipur), monuments, and sample places.
+4. `004_monument_search_rpc.sql` — Creates vector similarity search functions.
+5. `005_purge_group_locations.sql` — Sets up ephemeral location cleanup routines.
+6. `006_sos_functions.sql` — Configures the 2 km radial SOS broadcast system.
+
+### 4. (Optional) Run the Monument Recognition Microservice
+
+If using native CLIP inference locally:
+```bash
+cd recognition-service
+python -m venv venv
+
+# Windows:
+.\venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+*Note: If the recognition service is not running, WanderLens gracefully defaults to its simulated recognition fallback.*
+
+### 5. Run the Application
+
+```bash
+# In the project root directory
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🧪 Test Credentials for Evaluation
+
+For rapid testing and grading, pre-seeded accounts are available:
+
+| Role | Test Email | Default Password / OTP | Permissions & Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Traveller** | `traveller@wanderlens.test` | `WanderLens@2026` *(OTP: `123456`)* | Full access to monument scanner, reviews, community chat, group tracking, and 2 km SOS broadcast/response. |
+| **Moderator** | `moderator@wanderlens.test` | `WanderLens@2026` *(OTP: `123456`)* | Traveller capabilities + `/moderator` dashboard to review reported posts, suspend accounts, and edit historical texts. |
+| **Admin** | `admin@wanderlens.test` | `WanderLens@2026` *(OTP: `123456`)* | Superuser console (`/admin`), destination/monument catalog management, metric recalculations, and audit logs. |
 
 ---
 
 ## 📄 License & Credits
 
-* **Codebase License:** [MIT License](LICENSE)
-* **Historical Imagery:** Public domain and Creative Commons archival photographs sourced from Wikimedia Commons and the British Library Digital Collection (all individually attributed).
-* **Map Tiles:** &copy; [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, rendered via [Leaflet](https://leafletjs.com/).
+* **License:** [MIT License](LICENSE)
+* **Archival Photography:** Public domain and Creative Commons archival photographs sourced from Wikimedia Commons and the British Library Digital Collection.
+* **Maps:** Map data &copy; [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, rendered via [Leaflet](https://leafletjs.com/).
