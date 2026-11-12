@@ -2,6 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 
+/** Strip BOM and any non-printable/non-ASCII characters from env var values */
+function sanitize(s: string) {
+  return s.replace(/[^\x20-\x7E]/g, "").trim();
+}
+
 /**
  * Middleware Supabase client — refreshes session on every request.
  * Must be used in middleware.ts only.
@@ -18,8 +23,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    sanitize(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    sanitize(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     {
       cookies: {
         getAll() {

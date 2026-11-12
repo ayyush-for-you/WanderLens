@@ -91,35 +91,42 @@ export default function InteractiveMapSection() {
           }}
         >
           <div>
+            {/* Eyebrow — no gold, plain muted */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <span style={{ width: 32, height: 1, background: "#B99A65", display: "block" }} />
+              <span style={{ width: 28, height: 1, background: "var(--line)", display: "block" }} />
               <span
                 style={{
                   fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.25em",
-                  color: "#B99A65",
+                  fontWeight: 500,
+                  letterSpacing: "0.18em",
+                  color: "var(--muted)",
                   textTransform: "uppercase",
+                  fontFamily: "inherit",
                 }}
               >
-                Cartographic Intelligence
+                Heritage Map
               </span>
             </div>
+
+            {/* Heading — Geist, no serif */}
             <h2
               style={{
-                fontSize: "clamp(2rem, 5vw, 3.5rem)",
-                fontWeight: 400,
+                fontSize: "clamp(1.75rem, 4vw, 2.75rem)",
+                fontWeight: 500,
                 lineHeight: 1.15,
                 color: "var(--text)",
+                fontFamily: "inherit",
+                letterSpacing: "-0.02em",
               }}
             >
               The World Is Yours{" "}
-              <span style={{ fontStyle: "italic", color: "#B99A65", fontWeight: 300 }}>
+              <span style={{ color: "var(--soft)", fontWeight: 400 }}>
                 to Explore.
               </span>
             </h2>
           </div>
 
+          {/* White pill CTA */}
           <Link
             href="/discover"
             style={{
@@ -129,21 +136,22 @@ export default function InteractiveMapSection() {
               height: 40,
               padding: "0 20px",
               borderRadius: 999,
-              background: "#B99A65",
-              color: "#0b1013",
-              fontSize: 13,
+              background: "#fff",
+              color: "#0b0f12",
+              fontSize: 14,
               fontWeight: 500,
               textDecoration: "none",
               transition: "background 0.25s, transform 0.25s",
+              fontFamily: "inherit",
             }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLAnchorElement;
-              el.style.background = "#caa974";
+              el.style.background = "#e9eef0";
               el.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLAnchorElement;
-              el.style.background = "#B99A65";
+              el.style.background = "#fff";
               el.style.transform = "";
             }}
           >
@@ -161,7 +169,7 @@ export default function InteractiveMapSection() {
             border: "1px solid var(--line)",
             boxShadow: "0 30px 70px rgba(0,0,0,0.5)",
             height: 560,
-            background: "#0E1522",
+            background: "var(--ink)",
           }}
         >
           <LandingMap
@@ -182,12 +190,12 @@ export default function InteractiveMapSection() {
               maxWidth: 420,
               zIndex: 1000,
               background: "var(--panel)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
+              backdropFilter: "blur(22px) saturate(140%)",
+              WebkitBackdropFilter: "blur(22px) saturate(140%)",
               border: "1px solid var(--line)",
               borderRadius: 16,
               padding: 20,
-              boxShadow: "0 16px 40px rgba(0,0,0,0.5)",
+              boxShadow: "0 24px 50px -20px rgba(0,0,0,0.65)",
             }}
           >
             <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
@@ -210,14 +218,16 @@ export default function InteractiveMapSection() {
               </div>
 
               <div style={{ flex: 1 }}>
+                {/* Era — var(--muted), no gold */}
                 <span
                   style={{
                     fontSize: 10,
-                    color: "#B99A65",
+                    color: "var(--muted)",
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
                     display: "block",
                     marginBottom: 2,
+                    fontFamily: "inherit",
                   }}
                 >
                   {selectedMonument.era}
@@ -228,6 +238,7 @@ export default function InteractiveMapSection() {
                     fontWeight: 500,
                     color: "var(--text)",
                     marginBottom: 4,
+                    fontFamily: "inherit",
                   }}
                 >
                   {selectedMonument.name}
@@ -241,7 +252,7 @@ export default function InteractiveMapSection() {
                     gap: 6,
                   }}
                 >
-                  <MapPin style={{ width: 11, height: 11, color: "#B99A65" }} />
+                  <MapPin style={{ width: 11, height: 11, color: "var(--soft)" }} />
                   <span>
                     {selectedMonument.city}, {selectedMonument.state} ·{" "}
                     {selectedMonument.lat.toFixed(4)}°N, {selectedMonument.lng.toFixed(4)}°E
@@ -260,31 +271,38 @@ export default function InteractiveMapSection() {
                 justifyContent: "space-between",
               }}
             >
-              <span style={{ fontSize: 11, color: "var(--muted)" }}>Coordinates Verified</span>
+              <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "inherit" }}>Coordinates Verified</span>
+              {/* White pill "Scan Site" button */}
               <Link
                 href="/scan"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  padding: "6px 14px",
-                  borderRadius: 8,
-                  background: "#B99A65",
-                  color: "#0b1013",
+                  height: 32,
+                  padding: "0 14px",
+                  borderRadius: 999,
+                  background: "#fff",
+                  color: "#0b0f12",
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 500,
                   textDecoration: "none",
-                  transition: "background 0.25s",
+                  transition: "background 0.25s, transform 0.25s",
+                  fontFamily: "inherit",
                 }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.background = "#caa974")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.background = "#B99A65")
-                }
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement;
+                  el.style.background = "#e9eef0";
+                  el.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement;
+                  el.style.background = "#fff";
+                  el.style.transform = "";
+                }}
               >
                 <span>Scan Site</span>
-                <ArrowRight style={{ width: 12, height: 12 }} />
+                <ArrowRight style={{ width: 11, height: 11 }} />
               </Link>
             </div>
           </motion.div>

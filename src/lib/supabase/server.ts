@@ -9,8 +9,12 @@ import type { Database } from "@/types/database";
 export async function createClient() {
   const cookieStore = await cookies();
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder";
+  // Strip BOM and any non-printable/non-ASCII characters embedded in env vars
+  function sanitize(s: string) {
+    return s.replace(/[^\x20-\x7E]/g, "").trim();
+  }
+  const supabaseUrl = sanitize(process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co");
+  const supabaseKey = sanitize(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder");
 
   return createServerClient<Database>(
     supabaseUrl,

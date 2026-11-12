@@ -54,15 +54,18 @@ const panelStyle: React.CSSProperties = {
 };
 
 const selectStyle: React.CSSProperties = {
-  background: "rgba(255,255,255,0.05)",
+  height: 40,
+  background: "rgba(255,255,255,0.04)",
   border: "1px solid var(--line)",
   borderRadius: 10,
   color: "var(--text)",
-  padding: "8px 14px",
+  padding: "0 12px",
   fontSize: "0.875rem",
   fontFamily: "inherit",
   outline: "none",
   cursor: "pointer",
+  appearance: "none" as const,
+  WebkitAppearance: "none" as const,
 };
 
 export default function DiscoverClient({
@@ -142,8 +145,98 @@ export default function DiscoverClient({
         background: "var(--ink)",
         paddingTop: 96,
         paddingBottom: 64,
+        fontFamily: "inherit",
       }}
     >
+      {/* ── Shimmer / card-entrance animations ── */}
+      <style>{`
+        @keyframes wl-shimmer {
+          0%   { background-position: -400px 0; }
+          100% { background-position: 400px 0; }
+        }
+        @keyframes wl-card-up {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .wl-skeleton {
+          background: linear-gradient(
+            90deg,
+            var(--hover) 25%,
+            rgba(255,255,255,0.09) 50%,
+            var(--hover) 75%
+          );
+          background-size: 800px 100%;
+          animation: wl-shimmer 1.6s linear infinite;
+        }
+        .wl-card-enter {
+          animation: wl-card-up 0.6s var(--ease) both;
+        }
+        .wl-chip {
+          height: 34px;
+          padding: 0 16px;
+          border-radius: 999px;
+          font-size: 0.8125rem;
+          font-weight: 500;
+          white-space: nowrap;
+          border: 1px solid var(--line);
+          cursor: pointer;
+          transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+          background: transparent;
+          color: var(--soft);
+          font-family: inherit;
+          display: inline-flex;
+          align-items: center;
+        }
+        .wl-chip:hover {
+          background: var(--hover);
+          color: #fff;
+        }
+        .wl-chip.active {
+          background: #fff;
+          color: #0b0f12;
+          border-color: #fff;
+        }
+        .wl-place-card {
+          border-radius: 16px;
+          background: var(--panel);
+          border: 1px solid var(--line);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          cursor: pointer;
+          transition:
+            transform 0.35s var(--ease),
+            border-color 0.35s ease,
+            box-shadow 0.35s ease;
+        }
+        .wl-place-card:hover,
+        .wl-place-card:focus-within {
+          transform: translateY(-4px);
+          border-color: rgba(255,255,255,0.18);
+          box-shadow: 0 24px 50px -24px rgba(0,0,0,0.7);
+        }
+        .wl-place-card-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.6s var(--ease);
+        }
+        .wl-place-card:hover .wl-place-card-img,
+        .wl-place-card:focus-within .wl-place-card-img {
+          transform: scale(1.05);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .wl-card-enter,
+          .wl-skeleton {
+            animation: none !important;
+          }
+          .wl-place-card,
+          .wl-place-card-img {
+            transition: none !important;
+          }
+        }
+      `}</style>
+
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px" }}>
 
         {/* ── Header & Destination Bar ────────────────────────────── */}
@@ -162,11 +255,11 @@ export default function DiscoverClient({
               <span
                 style={{
                   fontSize: "0.7rem",
-                  fontWeight: 700,
+                  fontWeight: 500,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
-                  color: "#00C9A7",
-                  border: "1px solid rgba(0,201,167,0.35)",
+                  color: "var(--soft)",
+                  border: "1px solid var(--line)",
                   borderRadius: 999,
                   padding: "3px 10px",
                 }}
@@ -179,39 +272,54 @@ export default function DiscoverClient({
             </div>
             <h1
               style={{
-                fontSize: "clamp(1.5rem, 5vw, 2rem)",
+                fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
                 fontWeight: 500,
                 color: "var(--text)",
-                letterSpacing: "-0.01em",
-                lineHeight: 1.2,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.15,
+                fontFamily: "inherit",
               }}
             >
               Discover Hidden Gems
             </h1>
-            <p style={{ color: "var(--muted)", fontSize: "0.875rem", marginTop: 4 }}>
+            <p style={{ color: "var(--muted)", fontSize: "0.875rem", marginTop: 6 }}>
               Lesser-known, high-rated places with genuine traveller appreciation.
             </p>
           </div>
 
           {/* Destination Dropdown + View Mode Toggle */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <select
-              value={selectedDestinationId}
-              onChange={(e) => setSelectedDestinationId(e.target.value)}
-              style={{ ...selectStyle, minWidth: 170, fontWeight: 500 }}
-              aria-label="Select Destination"
-            >
-              {destinations.map((d) => (
-                <option key={d.id} value={d.id}>
-                  📍 {d.name} ({d.region})
-                </option>
-              ))}
-            </select>
+            <div style={{ position: "relative" }}>
+              <select
+                value={selectedDestinationId}
+                onChange={(e) => setSelectedDestinationId(e.target.value)}
+                style={{ ...selectStyle, minWidth: 180, paddingRight: 32, fontWeight: 500 }}
+                aria-label="Select Destination"
+              >
+                {destinations.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.region})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                style={{
+                  position: "absolute",
+                  right: 10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--muted)",
+                  pointerEvents: "none",
+                }}
+              />
+            </div>
 
             {/* View Mode Toggle: List vs Map */}
             <div
               style={{
                 display: "flex",
+                height: 40,
                 borderRadius: 10,
                 border: "1px solid var(--line)",
                 overflow: "hidden",
@@ -221,40 +329,42 @@ export default function DiscoverClient({
               <button
                 onClick={() => setViewMode("list")}
                 style={{
-                  padding: "8px 12px",
+                  padding: "0 12px",
                   border: "none",
                   background: viewMode === "list" ? "var(--hover)" : "transparent",
                   color: viewMode === "list" ? "var(--text)" : "var(--muted)",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
-                  gap: 4,
+                  gap: 5,
                   fontSize: "0.8rem",
                   fontWeight: 500,
                   transition: "background 0.2s ease, color 0.2s ease",
+                  fontFamily: "inherit",
                 }}
                 title="List View"
               >
-                <ListIcon size={15} /> List
+                <ListIcon size={14} /> List
               </button>
               <button
                 onClick={() => setViewMode("map")}
                 style={{
-                  padding: "8px 12px",
+                  padding: "0 12px",
                   border: "none",
                   background: viewMode === "map" ? "var(--hover)" : "transparent",
                   color: viewMode === "map" ? "var(--text)" : "var(--muted)",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
-                  gap: 4,
+                  gap: 5,
                   fontSize: "0.8rem",
                   fontWeight: 500,
                   transition: "background 0.2s ease, color 0.2s ease",
+                  fontFamily: "inherit",
                 }}
                 title="Map View"
               >
-                <MapIcon size={15} /> Map
+                <MapIcon size={14} /> Map
               </button>
             </div>
           </div>
@@ -275,19 +385,7 @@ export default function DiscoverClient({
             <button
               key={key}
               onClick={() => setCategory(key)}
-              style={{
-                padding: "6px 16px",
-                borderRadius: 999,
-                fontSize: "0.8125rem",
-                fontWeight: 500,
-                whiteSpace: "nowrap",
-                border: "1px solid",
-                cursor: "pointer",
-                transition: "background 0.2s ease, color 0.2s ease, border-color 0.2s ease",
-                background: category === key ? "rgba(255,255,255,0.12)" : "transparent",
-                borderColor: category === key ? "rgba(255,255,255,0.3)" : "var(--line)",
-                color: category === key ? "var(--text)" : "var(--muted)",
-              }}
+              className={`wl-chip${category === key ? " active" : ""}`}
             >
               {label}
             </button>
@@ -306,8 +404,9 @@ export default function DiscoverClient({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#B99A65" }}>
-              ✨ {hiddenGemsCount} Hidden Gems
+            <Sparkles size={14} style={{ color: "var(--soft)" }} />
+            <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "var(--soft)" }}>
+              {hiddenGemsCount} Hidden Gems
             </span>
             <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
               out of {places.length} places in {activeDestination?.name}
@@ -326,17 +425,30 @@ export default function DiscoverClient({
             >
               Sort:
             </span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              style={{ ...selectStyle, padding: "5px 10px", fontSize: "0.8rem" }}
-            >
-              {SORTS.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+            <div style={{ position: "relative" }}>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                style={{ ...selectStyle, height: 36, paddingRight: 28, fontSize: "0.8rem" }}
+              >
+                {SORTS.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={12}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--muted)",
+                  pointerEvents: "none",
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -363,13 +475,11 @@ export default function DiscoverClient({
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
+                className="wl-skeleton"
                 style={{
-                  height: 240,
-                  borderRadius: 14,
-                  background: "var(--panel)",
+                  height: 300,
+                  borderRadius: 16,
                   border: "1px solid var(--line)",
-                  opacity: 0.5,
-                  animation: "pulse 1.5s ease-in-out infinite",
                 }}
               />
             ))}
@@ -383,7 +493,7 @@ export default function DiscoverClient({
             }}
           >
             <Compass size={36} style={{ color: "var(--muted)", margin: "0 auto 14px" }} />
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 500, color: "var(--text)", marginBottom: 6 }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 500, color: "var(--text)", marginBottom: 6, fontFamily: "inherit" }}>
               No places found
             </h3>
             <p
@@ -400,13 +510,15 @@ export default function DiscoverClient({
             <button
               onClick={() => setCategory("all")}
               style={{
+                height: 36,
+                padding: "0 20px",
                 background: "var(--hover)",
                 border: "1px solid var(--line)",
                 borderRadius: 999,
                 color: "var(--soft)",
-                padding: "8px 20px",
                 fontSize: "0.875rem",
                 cursor: "pointer",
+                fontFamily: "inherit",
               }}
             >
               Show All Places
@@ -420,82 +532,106 @@ export default function DiscoverClient({
               gap: 16,
             }}
           >
-            {places.map((place) => (
+            {places.map((place, idx) => (
               <div
                 key={place.id}
+                className="wl-place-card wl-card-enter"
+                style={{ animationDelay: `${Math.min(idx, 7) * 60}ms` }}
                 onClick={() => setSelectedPlaceId(place.id)}
-                style={{
-                  ...panelStyle,
-                  cursor: "pointer",
-                  padding: 0,
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "column",
-                  transition: "transform 0.15s ease, border-color 0.15s ease",
-                  borderColor: place.is_hidden_gem
-                    ? "rgba(185,154,101,0.3)"
-                    : "var(--line)",
-                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && setSelectedPlaceId(place.id)}
+                aria-label={`View details for ${place.name}`}
               >
-                {/* Card Header / Gradient Banner */}
+                {/* ── Image Area (16:10) ── */}
                 <div
                   style={{
-                    height: 120,
                     position: "relative",
-                    background: place.is_hidden_gem
-                      ? "linear-gradient(135deg, rgba(185,154,101,0.18), rgba(11,16,19,0.95))"
-                      : "linear-gradient(135deg, rgba(0,201,167,0.12), rgba(11,16,19,0.95))",
-                    padding: "12px 14px",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
+                    paddingTop: "62.5%", /* 16:10 */
+                    overflow: "hidden",
+                    flexShrink: 0,
                   }}
                 >
-                  {/* Badges Bar */}
+                  <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background: "linear-gradient(135deg, #16222b, #0b1013)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.75rem", color: "var(--muted)", textTransform: "capitalize" }}>
+                        {place.category}
+                      </span>
+                    </div>
+
+                  {/* Dark gradient overlay at bottom for rating */}
                   <div
                     style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: "linear-gradient(to top, rgba(8,11,13,0.82) 0%, rgba(8,11,13,0.1) 50%, rgba(8,11,13,0) 100%)",
+                      pointerEvents: "none",
+                    }}
+                  />
+
+                  {/* Top badges row */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 10,
+                      left: 10,
+                      right: 10,
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "flex-start",
-                      gap: 8,
                     }}
                   >
+                    {/* Category tag */}
                     <span
                       style={{
-                        fontSize: "0.7rem",
-                        fontWeight: 600,
-                        letterSpacing: "0.06em",
+                        fontSize: "0.68rem",
+                        fontWeight: 500,
                         textTransform: "capitalize",
-                        color: "var(--muted)",
-                        border: "1px solid var(--line)",
+                        color: "rgba(255,255,255,0.85)",
+                        background: "rgba(255,255,255,0.12)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
                         borderRadius: 999,
-                        padding: "2px 8px",
-                        background: "rgba(0,0,0,0.3)",
+                        padding: "3px 9px",
+                        letterSpacing: "0.03em",
                       }}
                     >
                       {place.category}
                     </span>
+
+                    {/* Hidden gem badge */}
                     {place.is_hidden_gem && (
                       <span
                         style={{
                           padding: "3px 9px",
                           borderRadius: 999,
-                          background: "linear-gradient(135deg, #B99A65, #E8C97A)",
-                          color: "#1a0800",
-                          fontSize: "0.7rem",
-                          fontWeight: 800,
-                          letterSpacing: "0.04em",
-                          boxShadow: "0 2px 10px rgba(185,154,101,0.35)",
+                          background: "#fff",
+                          color: "#0b0f12",
+                          fontSize: "0.68rem",
+                          fontWeight: 500,
+                          letterSpacing: "0.03em",
                         }}
                       >
-                        💎 HIDDEN GEM
+                        Hidden Gem
                       </span>
                     )}
                   </div>
 
-                  {/* Rating & Distance */}
+                  {/* Bottom: rating pill + distance */}
                   <div
                     style={{
+                      position: "absolute",
+                      bottom: 10,
+                      left: 10,
+                      right: 10,
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
@@ -507,15 +643,17 @@ export default function DiscoverClient({
                         alignItems: "center",
                         gap: 4,
                         background: "rgba(0,0,0,0.55)",
+                        backdropFilter: "blur(6px)",
+                        WebkitBackdropFilter: "blur(6px)",
                         padding: "3px 8px",
                         borderRadius: 999,
                       }}
                     >
-                      <Star size={13} fill="#fbbf24" color="#fbbf24" />
-                      <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#fff" }}>
+                      <Star size={12} fill="#fff" color="#fff" />
+                      <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#fff" }}>
                         {place.avg_rating.toFixed(1)}
                       </span>
-                      <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.55)" }}>
+                      <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.6)" }}>
                         ({place.n_ratings})
                       </span>
                     </div>
@@ -523,21 +661,23 @@ export default function DiscoverClient({
                     {place.distance_m !== null && (
                       <span
                         style={{
-                          fontSize: "0.725rem",
+                          fontSize: "0.7rem",
                           fontWeight: 500,
                           color: "rgba(255,255,255,0.8)",
                           background: "rgba(0,0,0,0.55)",
+                          backdropFilter: "blur(6px)",
+                          WebkitBackdropFilter: "blur(6px)",
                           padding: "3px 8px",
                           borderRadius: 999,
                         }}
                       >
-                        {(place.distance_m / 1000).toFixed(1)} km away
+                        {(place.distance_m / 1000).toFixed(1)} km
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Card Body */}
+                {/* ── Card Body ── */}
                 <div
                   style={{
                     padding: "14px 16px",
@@ -555,6 +695,7 @@ export default function DiscoverClient({
                         color: "var(--text)",
                         marginBottom: 4,
                         lineHeight: 1.3,
+                        fontFamily: "inherit",
                       }}
                     >
                       {place.name}
@@ -577,7 +718,7 @@ export default function DiscoverClient({
                     )}
                   </div>
 
-                  {/* ── Transparent "Why is this recommended" explanation ── */}
+                  {/* ── Rationale line ── */}
                   <div
                     style={{
                       paddingTop: 8,
@@ -587,12 +728,12 @@ export default function DiscoverClient({
                   >
                     <p
                       style={{
-                        fontSize: "0.725rem",
-                        color: place.is_hidden_gem ? "#B99A65" : "var(--muted)",
+                        fontSize: "0.76rem",
+                        color: "var(--muted)",
                         lineHeight: 1.4,
                       }}
                     >
-                      💡 {place.recommendation_reason}
+                      {place.recommendation_reason}
                     </p>
                   </div>
                 </div>
