@@ -453,20 +453,10 @@ export default function SiteHeader({ profile }: SiteHeaderProps) {
             ref={ddRef}
             className="dd"
             style={{
-              // CSS custom properties control position/size
-              ["--x" as string]: "0px",
-              ["--w" as string]: "400px",
-              ["--h" as string]: "300px",
-              ["--s" as string]: "0.97",
+              // Static layout values only — transitions and CSS vars are in SCOPED_CSS
               position: "absolute",
               top: 64,
               left: 0,
-              width: "var(--w)",
-              height: "var(--h)",
-              transform: "translateX(var(--x)) scale(var(--s))",
-              transformOrigin: "50% 0",
-              opacity: 0,
-              pointerEvents: "none",
               borderRadius: 16,
               background: "var(--panel)",
               border: "1px solid var(--line)",
@@ -1123,8 +1113,18 @@ const modeCardOverlayStyle: React.CSSProperties = {
 // All selectors are scoped under #header so they don't bleed globally.
 
 const SCOPED_CSS = `
-/* ── Dropdown container ── */
+/* ── Dropdown container — base state controlled entirely by CSS ── */
 #header .dd {
+  --x: 0px;
+  --w: 400px;
+  --h: 300px;
+  --s: 0.97;
+  width: var(--w);
+  height: var(--h);
+  transform: translateX(var(--x)) scale(var(--s));
+  transform-origin: 50% 0;
+  opacity: 0;
+  pointer-events: none;
   transition:
     transform var(--morph) var(--ease),
     width var(--morph) var(--ease),
