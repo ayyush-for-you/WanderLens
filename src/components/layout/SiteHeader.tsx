@@ -50,6 +50,15 @@ const DISCOVER_ROWS = [
   },
 ] as const;
 
+// ─── Destinations panel rows ──────────────────────────────────────────────────
+
+const DESTINATION_ROWS = [
+  { label: "Varanasi", href: "/discover" },
+  { label: "Jaipur", href: "/discover" },
+  { label: "Hampi", href: "/discover" },
+  { label: "All destinations", href: "/discover" },
+] as const;
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SiteHeader({ profile }: SiteHeaderProps) {
@@ -667,12 +676,7 @@ export default function SiteHeader({ profile }: SiteHeaderProps) {
                 gap: 2,
               }}
             >
-              {[
-                { label: "Varanasi", href: "/communities" },
-                { label: "Jaipur", href: "/communities" },
-                { label: "Hampi", href: "/communities" },
-                { label: "All destinations", href: "/communities" },
-              ].map(({ label, href }) => (
+              {DESTINATION_ROWS.map(({ label, href }) => (
                 <Link
                   key={label}
                   href={href}
@@ -901,8 +905,8 @@ export default function SiteHeader({ profile }: SiteHeaderProps) {
 
         {/* DESTINATIONS group */}
         <SheetHeading>Destinations</SheetHeading>
-        {["Varanasi", "Jaipur", "Hampi", "All destinations"].map((label) => (
-          <SheetLink key={label} href="/communities" onClose={() => setSheetOpen(false)}>
+        {DESTINATION_ROWS.map(({ label, href }) => (
+          <SheetLink key={label} href={href} onClose={() => setSheetOpen(false)}>
             {label}
           </SheetLink>
         ))}
