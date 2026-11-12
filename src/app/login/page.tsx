@@ -4,20 +4,32 @@ import { useState, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, LogIn, Mail, Lock, Compass } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 
+function LogoIcon() {
+  return (
+    <svg width="30" height="26" viewBox="0 0 30 26" fill="none" aria-hidden="true">
+      <path
+        fill="#fff"
+        fillRule="evenodd"
+        d="M3.2 19.6C.4 15.8 1.3 8.6 6.6 4.7 11.3 1.2 18.9.9 23.9 4.1c4.7 3 6.3 9 3.6 13.9-2.9 5.3-9.4 7.7-15.4 7-3.8-.4-6.9-2.4-8.9-5.4ZM9.5 17.2l4.3-6.4 2.6 3.6 1.7-2.2 3.4 5z"
+      />
+    </svg>
+  );
+}
+
 function LoginForm() {
-  const [email, setEmail]             = useState("");
-  const [password, setPassword]       = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError]             = useState("");
-  const [shake, setShake]             = useState(false);
-  const [isPending, startTransition]  = useTransition();
-  const router       = useRouter();
+  const [error, setError] = useState("");
+  const [shake, setShake] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect     = searchParams.get("redirect") || "/mode-select";
+  const redirect = searchParams.get("redirect") || "/mode-select";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,124 +53,328 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#101B2B] relative overflow-hidden">
-      {/* Background Ambience */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#B99A65]/10 rounded-full blur-[140px]" />
-      </div>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "var(--ink)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Subtle radial glow */}
+      <div
+        style={{
+          position: "absolute",
+          top: "25%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "520px",
+          height: "520px",
+          background: "radial-gradient(circle, rgba(255,255,255,0.035) 0%, rgba(11,16,19,0) 70%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10"
+        animate={shake ? { x: [-8, 8, -8, 8, 0] } : { x: 0 }}
+        transition={{ duration: 0.35 }}
+        style={{
+          width: "100%",
+          maxWidth: "420px",
+          background: "var(--panel)",
+          border: "1px solid var(--line)",
+          borderRadius: "16px",
+          backdropFilter: "blur(22px) saturate(140%)",
+          WebkitBackdropFilter: "blur(22px) saturate(140%)",
+          padding: "32px",
+          boxShadow: "0 30px 70px -25px rgba(0,0,0,0.65), 0 2px 10px rgba(0,0,0,0.2)",
+          position: "relative",
+          zIndex: 1,
+        }}
       >
-        {/* Brand Heading */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-4 group">
-            <div className="w-10 h-10 rounded-2xl bg-[#B99A65] flex items-center justify-center text-[#101B2B] shadow-lg group-hover:scale-105 transition-transform">
-              <Compass className="w-5 h-5" />
-            </div>
-            <span className="font-['Playfair_Display'] text-2xl font-bold tracking-tight text-white">
-              Wander<span className="text-[#B99A65]">Lens</span>
-            </span>
+        {/* Top of Card: Logo + Headings */}
+        <div style={{ textAlign: "center", marginBottom: "28px" }}>
+          <Link
+            href="/"
+            aria-label="WanderLens home"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "18px",
+              transition: "transform 0.25s ease",
+            }}
+          >
+            <LogoIcon />
           </Link>
-          <h1 className="text-3xl font-normal font-['Playfair_Display'] text-white">
-            Welcome Back
+
+          <h1
+            style={{
+              fontSize: "26px",
+              fontWeight: 500,
+              color: "var(--text)",
+              letterSpacing: "-0.015em",
+              lineHeight: 1.25,
+              margin: "0 0 6px 0",
+            }}
+          >
+            Welcome back
           </h1>
-          <p className="text-xs text-[#D9C7AC]/70 font-['Manrope'] mt-1">
+          <p
+            style={{
+              fontSize: "14.5px",
+              color: "var(--muted)",
+              lineHeight: 1.45,
+              margin: 0,
+            }}
+          >
             Access your curated journal and exploration telemetry
           </p>
         </div>
 
-        {/* Luxury Form Card */}
-        <motion.div
-          animate={shake ? { x: [-10, 10, -10, 10, 0] } : { x: 0 }}
-          transition={{ duration: 0.4 }}
-          className="luxury-glass-dark p-8 sm:p-10 rounded-3xl border border-white/15 shadow-2xl"
-        >
-          <form onSubmit={handleLogin} noValidate className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#D9C7AC] font-mono">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-[#8E9BAE] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="email"
-                  className="input pl-11"
-                  placeholder="traveler@wanderlens.com"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                  required
-                  autoComplete="email"
-                />
-              </div>
-            </div>
+        {/* Error message */}
+        {error && (
+          <div
+            role="alert"
+            style={{
+              background: "rgba(220, 38, 38, 0.1)",
+              border: "1px solid rgba(220, 38, 38, 0.3)",
+              borderRadius: "8px",
+              padding: "10px 12px",
+              color: "#fca5a5",
+              fontSize: "13px",
+              lineHeight: 1.4,
+              marginBottom: "20px",
+            }}
+          >
+            {error}
+          </div>
+        )}
 
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#D9C7AC] font-mono">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-[#8E9BAE] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="input pl-11 pr-12"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                  required
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E9BAE] hover:text-white"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <motion.p
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="text-xs text-[#E76F51] font-['Manrope']"
-              >
-                {error}
-              </motion.p>
-            )}
-
-            <button
-              type="submit"
-              disabled={isPending || !email || !password}
-              className="w-full py-4 rounded-full btn-luxury-gold text-xs shadow-xl active:scale-95 disabled:opacity-50 mt-2"
+        {/* Form */}
+        <form onSubmit={handleLogin} noValidate style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          {/* Email input */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label
+              htmlFor="email"
+              style={{
+                fontSize: "12px",
+                fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: "var(--muted)",
+              }}
             >
-              {isPending ? (
-                <span className="w-4 h-4 border-2 border-[#101B2B] border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <LogIn className="w-4 h-4" />
-                  <span>Sign In to Journey</span>
-                </span>
-              )}
-            </button>
-          </form>
-
-          <div className="divider-label my-6">
-            <span>or</span>
+              Email Address
+            </label>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <Mail
+                size={16}
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  color: "var(--muted)",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="traveler@wanderlens.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                }}
+                required
+                autoComplete="email"
+                style={{
+                  width: "100%",
+                  height: "44px",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--line)",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  paddingLeft: "42px",
+                  paddingRight: "14px",
+                  fontFamily: "inherit",
+                  outline: "none",
+                  transition: "border-color 0.2s ease, background 0.2s ease",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--line)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                }}
+              />
+            </div>
           </div>
 
-          <p className="text-center text-xs text-[#D9C7AC]/80 font-['Manrope']">
-            Do not have an account yet?{" "}
-            <Link href="/signup" className="text-[#B99A65] font-bold hover:underline">
-              Register Here →
-            </Link>
-          </p>
-        </motion.div>
+          {/* Password input */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label
+              htmlFor="password"
+              style={{
+                fontSize: "12px",
+                fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: "var(--muted)",
+              }}
+            >
+              Password
+            </label>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <Lock
+                size={16}
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  color: "var(--muted)",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
+                required
+                autoComplete="current-password"
+                style={{
+                  width: "100%",
+                  height: "44px",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--line)",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  paddingLeft: "42px",
+                  paddingRight: "42px",
+                  fontFamily: "inherit",
+                  outline: "none",
+                  transition: "border-color 0.2s ease, background 0.2s ease",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--line)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--muted)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "6px",
+                }}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={isPending || !email || !password}
+            style={{
+              width: "100%",
+              height: "44px",
+              borderRadius: "999px",
+              background: "#ffffff",
+              color: "#0b0f12",
+              fontSize: "14px",
+              fontWeight: 500,
+              border: "none",
+              cursor: isPending || !email || !password ? "not-allowed" : "pointer",
+              opacity: isPending || !email || !password ? 0.6 : 1,
+              marginTop: "8px",
+              transition: "background 0.25s ease, transform 0.25s ease, opacity 0.25s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}
+            onMouseEnter={(e) => {
+              if (!isPending && email && password) {
+                e.currentTarget.style.background = "#e9eef0";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#ffffff";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            {isPending ? (
+              <span
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  border: "2px solid rgba(11,15,18,0.25)",
+                  borderTopColor: "#0b0f12",
+                  borderRadius: "50%",
+                  display: "inline-block",
+                  animation: "spin 0.8s linear infinite",
+                }}
+              />
+            ) : (
+              "Sign In"
+            )}
+          </button>
+        </form>
+
+        {/* Footer line */}
+        <p
+          style={{
+            marginTop: "24px",
+            textAlign: "center",
+            fontSize: "13.5px",
+            color: "var(--muted)",
+            margin: "24px 0 0 0",
+          }}
+        >
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            style={{
+              color: "#ffffff",
+              textDecoration: "underline",
+              textUnderlineOffset: "3px",
+              fontWeight: 500,
+            }}
+          >
+            Register
+          </Link>
+        </p>
       </motion.div>
     </div>
   );
@@ -166,7 +382,19 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#101B2B]" />}>
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "var(--ink)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        />
+      }
+    >
       <LoginForm />
     </Suspense>
   );

@@ -2,15 +2,26 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, UserPlus, Mail, Lock, User, CheckCircle, Compass } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+
+function LogoIcon() {
+  return (
+    <svg width="30" height="26" viewBox="0 0 30 26" fill="none" aria-hidden="true">
+      <path
+        fill="#fff"
+        fillRule="evenodd"
+        d="M3.2 19.6C.4 15.8 1.3 8.6 6.6 4.7 11.3 1.2 18.9.9 23.9 4.1c4.7 3 6.3 9 3.6 13.9-2.9 5.3-9.4 7.7-15.4 7-3.8-.4-6.9-2.4-8.9-5.4ZM9.5 17.2l4.3-6.4 2.6 3.6 1.7-2.2 3.4 5z"
+      />
+    </svg>
+  );
+}
 
 const passwordRequirements = [
   { label: "At least 8 characters", check: (p: string) => p.length >= 8 },
-  { label: "One uppercase letter",  check: (p: string) => /[A-Z]/.test(p) },
-  { label: "One number",            check: (p: string) => /\d/.test(p) },
+  { label: "One uppercase letter", check: (p: string) => /[A-Z]/.test(p) },
+  { label: "One number", check: (p: string) => /\d/.test(p) },
 ];
 
 function getPasswordStrength(p: string): number {
@@ -20,20 +31,19 @@ function getPasswordStrength(p: string): number {
 
 function getStrengthColor(p: string): string {
   const s = getPasswordStrength(p);
-  if (s <= 33) return "#E76F51";
-  if (s <= 66) return "#B99A65";
-  return "#00C9A7";
+  if (s <= 33) return "#f87171";
+  if (s <= 66) return "#fbbf24";
+  return "#34d399";
 }
 
 export default function SignupPage() {
-  const [displayName, setDisplayName]   = useState("");
-  const [email, setEmail]               = useState("");
-  const [password, setPassword]         = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors]             = useState<Record<string, string>>({});
-  const [done, setDone]                 = useState(false);
-  const [isPending, startTransition]    = useTransition();
-  const router = useRouter();
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [done, setDone] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -49,7 +59,10 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
     setErrors({});
 
     startTransition(async () => {
@@ -74,27 +87,119 @@ export default function SignupPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-[#101B2B]">
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "var(--ink)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "16px",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: "25%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "520px",
+            height: "520px",
+            background: "radial-gradient(circle, rgba(255,255,255,0.035) 0%, rgba(11,16,19,0) 70%)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="luxury-glass-dark p-10 rounded-3xl border border-[#B99A65]/40 max-w-md w-full text-center space-y-4"
+          transition={{ duration: 0.4 }}
+          style={{
+            width: "100%",
+            maxWidth: "420px",
+            background: "var(--panel)",
+            border: "1px solid var(--line)",
+            borderRadius: "16px",
+            backdropFilter: "blur(22px) saturate(140%)",
+            WebkitBackdropFilter: "blur(22px) saturate(140%)",
+            padding: "36px 32px",
+            textAlign: "center",
+            boxShadow: "0 30px 70px -25px rgba(0,0,0,0.65), 0 2px 10px rgba(0,0,0,0.2)",
+            position: "relative",
+            zIndex: 1,
+          }}
         >
-          <div className="w-16 h-16 rounded-2xl bg-[#B99A65]/15 border border-[#B99A65]/40 flex items-center justify-center text-[#B99A65] mx-auto">
-            <Mail className="w-8 h-8" />
+          <div
+            style={{
+              width: "52px",
+              height: "52px",
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid var(--line)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 20px auto",
+              color: "#ffffff",
+            }}
+          >
+            <Mail size={24} />
           </div>
-          <h2 className="text-2xl font-normal font-['Playfair_Display'] text-white">
-            Verify Your Inscription
+
+          <h2
+            style={{
+              fontSize: "24px",
+              fontWeight: 500,
+              color: "var(--text)",
+              letterSpacing: "-0.015em",
+              margin: "0 0 10px 0",
+            }}
+          >
+            Check your email
           </h2>
-          <p className="text-xs text-[#D9C7AC]/80 leading-relaxed font-['Manrope']">
-            We sent an activation link to <strong className="text-white">{email}</strong>.
+
+          <p
+            style={{
+              fontSize: "14px",
+              color: "var(--muted)",
+              lineHeight: 1.55,
+              margin: "0 0 24px 0",
+            }}
+          >
+            We sent an activation link to <strong style={{ color: "#ffffff" }}>{email}</strong>.
             Click the link in your inbox to unlock your passport to communities, live groups, and emergency safety telemetry.
           </p>
-          <div className="pt-4">
-            <Link href="/login" className="px-8 py-3.5 rounded-full btn-luxury-gold text-xs inline-block">
-              Proceed to Sign In
-            </Link>
-          </div>
+
+          <Link
+            href="/login"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              height: "44px",
+              borderRadius: "999px",
+              background: "#ffffff",
+              color: "#0b0f12",
+              fontSize: "14px",
+              fontWeight: 500,
+              textDecoration: "none",
+              transition: "background 0.25s ease, transform 0.25s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#e9eef0";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#ffffff";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            Proceed to Sign In
+          </Link>
         </motion.div>
       </div>
     );
@@ -104,151 +209,451 @@ export default function SignupPage() {
   const strengthColor = getStrengthColor(password);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#101B2B] relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#B99A65]/10 rounded-full blur-[140px]" />
-      </div>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "var(--ink)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Subtle radial glow */}
+      <div
+        style={{
+          position: "absolute",
+          top: "25%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "520px",
+          height: "520px",
+          background: "radial-gradient(circle, rgba(255,255,255,0.035) 0%, rgba(11,16,19,0) 70%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10"
+        transition={{ duration: 0.4 }}
+        style={{
+          width: "100%",
+          maxWidth: "420px",
+          background: "var(--panel)",
+          border: "1px solid var(--line)",
+          borderRadius: "16px",
+          backdropFilter: "blur(22px) saturate(140%)",
+          WebkitBackdropFilter: "blur(22px) saturate(140%)",
+          padding: "32px",
+          boxShadow: "0 30px 70px -25px rgba(0,0,0,0.65), 0 2px 10px rgba(0,0,0,0.2)",
+          position: "relative",
+          zIndex: 1,
+        }}
       >
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-4 group">
-            <div className="w-10 h-10 rounded-2xl bg-[#B99A65] flex items-center justify-center text-[#101B2B] shadow-lg group-hover:scale-105 transition-transform">
-              <Compass className="w-5 h-5" />
-            </div>
-            <span className="font-['Playfair_Display'] text-2xl font-bold tracking-tight text-white">
-              Wander<span className="text-[#B99A65]">Lens</span>
-            </span>
+        {/* Top of Card: Logo + Headings */}
+        <div style={{ textAlign: "center", marginBottom: "26px" }}>
+          <Link
+            href="/"
+            aria-label="WanderLens home"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "18px",
+              transition: "transform 0.25s ease",
+            }}
+          >
+            <LogoIcon />
           </Link>
-          <h1 className="text-3xl font-normal font-['Playfair_Display'] text-white">
-            Begin Your Chapter
+
+          <h1
+            style={{
+              fontSize: "26px",
+              fontWeight: 500,
+              color: "var(--text)",
+              letterSpacing: "-0.015em",
+              lineHeight: 1.25,
+              margin: "0 0 6px 0",
+            }}
+          >
+            Create your account
           </h1>
-          <p className="text-xs text-[#D9C7AC]/70 font-['Manrope'] mt-1">
-            Free luxury heritage companion and safety telemetry
+          <p
+            style={{
+              fontSize: "14.5px",
+              color: "var(--muted)",
+              lineHeight: 1.45,
+              margin: 0,
+            }}
+          >
+            Discover heritage, join communities, and travel safely
           </p>
         </div>
 
-        <div className="luxury-glass-dark p-8 sm:p-10 rounded-3xl border border-white/15 shadow-2xl">
-          <form onSubmit={handleSignup} noValidate className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#D9C7AC] font-mono">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-[#8E9BAE] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  className="input pl-11"
-                  placeholder="e.g. Princess Gayatri"
-                  value={displayName}
-                  onChange={(e) => { setDisplayName(e.target.value); setErrors((p) => ({ ...p, displayName: "" })); }}
-                  required
-                  autoComplete="name"
-                />
-              </div>
-              {errors.displayName && <p className="text-xs text-[#E76F51]">{errors.displayName}</p>}
-            </div>
+        {/* Global form error message */}
+        {errors.form && (
+          <div
+            role="alert"
+            style={{
+              background: "rgba(220, 38, 38, 0.1)",
+              border: "1px solid rgba(220, 38, 38, 0.3)",
+              borderRadius: "8px",
+              padding: "10px 12px",
+              color: "#fca5a5",
+              fontSize: "13px",
+              lineHeight: 1.4,
+              marginBottom: "18px",
+            }}
+          >
+            {errors.form}
+          </div>
+        )}
 
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#D9C7AC] font-mono">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-[#8E9BAE] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="email"
-                  className="input pl-11"
-                  placeholder="traveler@wanderlens.com"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: "" })); }}
-                  required
-                  autoComplete="email"
-                />
-              </div>
-              {errors.email && <p className="text-xs text-[#E76F51]">{errors.email}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#D9C7AC] font-mono">
-                Security Password
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-[#8E9BAE] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="input pl-11 pr-12"
-                  placeholder="Create password"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: "" })); }}
-                  required
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E9BAE] hover:text-white"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-
-              {password.length > 0 && (
-                <>
-                  <div className="pw-strength-bar">
-                    <motion.div
-                      className="pw-strength-fill"
-                      animate={{ width: `${strength}%`, backgroundColor: strengthColor }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                  <div className="space-y-1 pt-1">
-                    {passwordRequirements.map(({ label, check }) => {
-                      const met = check(password);
-                      return (
-                        <div key={label} className="flex items-center gap-2 text-[11px] font-['Manrope']">
-                          <CheckCircle className={`w-3 h-3 ${met ? "text-emerald-400" : "text-white/30"}`} />
-                          <span className={met ? "text-emerald-300" : "text-white/40"}>{label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-              {errors.password && <p className="text-xs text-[#E76F51]">{errors.password}</p>}
-            </div>
-
-            {errors.form && <p className="text-xs text-[#E76F51]">{errors.form}</p>}
-
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full py-4 rounded-full btn-luxury-gold text-xs shadow-xl active:scale-95 disabled:opacity-50 mt-2 font-['Manrope']"
+        {/* Form */}
+        <form onSubmit={handleSignup} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Full Name input */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label
+              htmlFor="displayName"
+              style={{
+                fontSize: "12px",
+                fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: "var(--muted)",
+              }}
             >
-              {isPending ? (
-                <span className="w-4 h-4 border-2 border-[#101B2B] border-t-transparent rounded-full animate-spin inline-block" />
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <UserPlus className="w-4 h-4" />
-                  <span>Create Travel Passport</span>
-                </span>
-              )}
-            </button>
-          </form>
+              Full Name
+            </label>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <User
+                size={16}
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  color: "var(--muted)",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                id="displayName"
+                type="text"
+                name="name"
+                placeholder="Princess Gayatri"
+                value={displayName}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  setErrors((p) => ({ ...p, displayName: "" }));
+                }}
+                required
+                autoComplete="name"
+                style={{
+                  width: "100%",
+                  height: "44px",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--line)",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  paddingLeft: "42px",
+                  paddingRight: "14px",
+                  fontFamily: "inherit",
+                  outline: "none",
+                  transition: "border-color 0.2s ease, background 0.2s ease",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--line)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                }}
+              />
+            </div>
+            {errors.displayName && (
+              <span style={{ fontSize: "12px", color: "var(--danger)", marginTop: "2px" }}>
+                {errors.displayName}
+              </span>
+            )}
+          </div>
 
-          <div className="divider-label my-6"><span>or</span></div>
+          {/* Email input */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label
+              htmlFor="email"
+              style={{
+                fontSize: "12px",
+                fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: "var(--muted)",
+              }}
+            >
+              Email Address
+            </label>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <Mail
+                size={16}
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  color: "var(--muted)",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="traveler@wanderlens.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setErrors((p) => ({ ...p, email: "" }));
+                }}
+                required
+                autoComplete="email"
+                style={{
+                  width: "100%",
+                  height: "44px",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--line)",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  paddingLeft: "42px",
+                  paddingRight: "14px",
+                  fontFamily: "inherit",
+                  outline: "none",
+                  transition: "border-color 0.2s ease, background 0.2s ease",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--line)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                }}
+              />
+            </div>
+            {errors.email && (
+              <span style={{ fontSize: "12px", color: "var(--danger)", marginTop: "2px" }}>
+                {errors.email}
+              </span>
+            )}
+          </div>
 
-          <p className="text-center text-xs text-[#D9C7AC]/80 font-['Manrope']">
-            Already registered?{" "}
-            <Link href="/login" className="text-[#B99A65] font-bold hover:underline">
-              Sign In Here →
-            </Link>
-          </p>
-        </div>
+          {/* Password input */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label
+              htmlFor="password"
+              style={{
+                fontSize: "12px",
+                fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: "var(--muted)",
+              }}
+            >
+              Security Password
+            </label>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <Lock
+                size={16}
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  color: "var(--muted)",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Create password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setErrors((p) => ({ ...p, password: "" }));
+                }}
+                required
+                autoComplete="new-password"
+                style={{
+                  width: "100%",
+                  height: "44px",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--line)",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  paddingLeft: "42px",
+                  paddingRight: "42px",
+                  fontFamily: "inherit",
+                  outline: "none",
+                  transition: "border-color 0.2s ease, background 0.2s ease",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--line)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--muted)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "6px",
+                }}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {errors.password && (
+              <span style={{ fontSize: "12px", color: "var(--danger)", marginTop: "2px" }}>
+                {errors.password}
+              </span>
+            )}
+
+            {/* Password strength & checklist */}
+            {password.length > 0 && (
+              <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                {/* Strength meter bar */}
+                <div
+                  style={{
+                    width: "100%",
+                    height: "3px",
+                    background: "rgba(255,255,255,0.08)",
+                    borderRadius: "999px",
+                    overflow: "hidden",
+                  }}
+                >
+                  <motion.div
+                    animate={{ width: `${strength}%`, backgroundColor: strengthColor }}
+                    transition={{ duration: 0.25 }}
+                    style={{ height: "100%", borderRadius: "999px" }}
+                  />
+                </div>
+
+                {/* Checklist */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {passwordRequirements.map(({ label, check }) => {
+                    const met = check(password);
+                    return (
+                      <div
+                        key={label}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "12px",
+                          color: met ? "#34d399" : "var(--muted)",
+                          transition: "color 0.2s ease",
+                        }}
+                      >
+                        <CheckCircle size={13} style={{ opacity: met ? 1 : 0.4 }} />
+                        <span>{label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={isPending}
+            style={{
+              width: "100%",
+              height: "44px",
+              borderRadius: "999px",
+              background: "#ffffff",
+              color: "#0b0f12",
+              fontSize: "14px",
+              fontWeight: 500,
+              border: "none",
+              cursor: isPending ? "not-allowed" : "pointer",
+              opacity: isPending ? 0.6 : 1,
+              marginTop: "8px",
+              transition: "background 0.25s ease, transform 0.25s ease, opacity 0.25s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}
+            onMouseEnter={(e) => {
+              if (!isPending) {
+                e.currentTarget.style.background = "#e9eef0";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#ffffff";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            {isPending ? (
+              <span
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  border: "2px solid rgba(11,15,18,0.25)",
+                  borderTopColor: "#0b0f12",
+                  borderRadius: "50%",
+                  display: "inline-block",
+                  animation: "spin 0.8s linear infinite",
+                }}
+              />
+            ) : (
+              "Create Account"
+            )}
+          </button>
+        </form>
+
+        {/* Footer line */}
+        <p
+          style={{
+            marginTop: "24px",
+            textAlign: "center",
+            fontSize: "13.5px",
+            color: "var(--muted)",
+            margin: "24px 0 0 0",
+          }}
+        >
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            style={{
+              color: "#ffffff",
+              textDecoration: "underline",
+              textUnderlineOffset: "3px",
+              fontWeight: 500,
+            }}
+          >
+            Sign in
+          </Link>
+        </p>
       </motion.div>
     </div>
   );
