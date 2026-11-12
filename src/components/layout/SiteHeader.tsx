@@ -53,9 +53,13 @@ const DISCOVER_ROWS = [
 // ─── Destinations panel rows ──────────────────────────────────────────────────
 
 const DESTINATION_ROWS = [
-  { label: "Varanasi", href: "/discover" },
-  { label: "Jaipur", href: "/discover" },
-  { label: "Hampi", href: "/discover" },
+  { label: "Delhi",        href: "/discover?destination=Delhi" },
+  { label: "Jaipur",       href: "/discover?destination=Jaipur" },
+  { label: "Varanasi",     href: "/discover?destination=Varanasi" },
+  { label: "Hampi",        href: "/discover?destination=Hampi" },
+  { label: "Uttarakhand",  href: "/discover?destination=Uttarakhand" },
+  { label: "Agra",         href: "/discover?destination=Agra" },
+  { label: "Udaipur",      href: "/discover?destination=Udaipur" },
   { label: "All destinations", href: "/discover" },
 ] as const;
 
@@ -668,11 +672,11 @@ export default function SiteHeader({ profile }: SiteHeaderProps) {
                 position: "absolute",
                 top: 0,
                 left: 0,
-                width: 232,
+                width: 440,
                 height: 218,
                 padding: 8,
-                display: "flex",
-                flexDirection: "column",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
                 gap: 2,
               }}
             >
@@ -682,7 +686,6 @@ export default function SiteHeader({ profile }: SiteHeaderProps) {
                   href={href}
                   className="r-link"
                   style={{
-                    flex: 1,
                     display: "flex",
                     alignItems: "center",
                     padding: "0 12px",
@@ -691,6 +694,7 @@ export default function SiteHeader({ profile }: SiteHeaderProps) {
                     color: "var(--text)",
                     textDecoration: "none",
                     transition: "background 0.25s",
+                    minHeight: 0,
                   }}
                 >
                   {label}

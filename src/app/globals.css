@@ -748,3 +748,13 @@ h1, h2, h3, h4 {
     -webkit-backdrop-filter: none !important;
   }
 }
+
+select {
+  color-scheme: dark !important;
+}
+select option,
+select optgroup {
+  background-color: #0e1317 !important;
+  color: #ffffff !important;
+}
+

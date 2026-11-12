@@ -54,6 +54,7 @@ const panelStyle: React.CSSProperties = {
 };
 
 const selectStyle: React.CSSProperties = {
+  colorScheme: "dark",
   height: 40,
   background: "rgba(255,255,255,0.04)",
   border: "1px solid var(--line)",
@@ -73,8 +74,28 @@ export default function DiscoverClient({
   profile,
 }: DiscoverClientProps) {
   const [destinations] = useState<Destination[]>(initialDestinations);
+
+  // ── Read optional ?destination=<name> query param on first mount ──────────
+  // Case-insensitive prefix match: "Delhi" matches "Delhi (National Capital Territory)".
+  // Falls back to initialDestinations[0] if no match is found.
   const [selectedDestinationId, setSelectedDestinationId] = useState<string>(
-    initialDestinations[0]?.id || ""
+    () => {
+      const defaultId = initialDestinations[0]?.id || "";
+      if (typeof window === "undefined") return defaultId;
+      try {
+        const param = new URLSearchParams(window.location.search).get("destination");
+        if (param) {
+          const lower = param.toLowerCase();
+          const match = initialDestinations.find((d) =>
+            d.name.toLowerCase().startsWith(lower)
+          );
+          if (match) return match.id;
+        }
+      } catch {
+        // ignore – fall through to default
+      }
+      return defaultId;
+    }
   );
 
   const [category, setCategory] = useState<PlaceCategory | "all">("all");
@@ -293,7 +314,7 @@ export default function DiscoverClient({
               <select
                 value={selectedDestinationId}
                 onChange={(e) => setSelectedDestinationId(e.target.value)}
-                style={{ ...selectStyle, minWidth: 180, paddingRight: 32, fontWeight: 500 }}
+                style={{ ...selectStyle, colorScheme: "dark", minWidth: 180, paddingRight: 32, fontWeight: 500 }}
                 aria-label="Select Destination"
               >
                 {destinations.map((d) => (
@@ -429,7 +450,7 @@ export default function DiscoverClient({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                style={{ ...selectStyle, height: 36, paddingRight: 28, fontSize: "0.8rem" }}
+                style={{ ...selectStyle, colorScheme: "dark", height: 36, paddingRight: 28, fontSize: "0.8rem" }}
               >
                 {SORTS.map((s) => (
                   <option key={s.key} value={s.key}>

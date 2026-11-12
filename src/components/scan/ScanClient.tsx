@@ -151,6 +151,10 @@ export default function ScanClient({ profile }: ScanClientProps) {
   // Start Camera
   const startCamera = async () => {
     setCameraError(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError("Camera API not available in this browser or context (requires HTTPS).");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -158,12 +162,24 @@ export default function ScanClient({ profile }: ScanClientProps) {
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        // autoPlay handles play() on iOS/Safari; this is a belt-and-suspenders fallback
+        videoRef.current.play().catch(() => {/* silently ignored – autoPlay handles it */});
       }
       setCameraActive(true);
     } catch (err: any) {
       console.warn("Camera access denied or unavailable:", err);
-      setCameraError("Camera access unavailable. You can upload an image file instead.");
+      const name = (err as DOMException).name;
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        setCameraError(
+          "Camera permission denied. Please allow camera access in your browser settings, then try again."
+        );
+      } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+        setCameraError(
+          "No camera found on this device. You can still upload an image file below."
+        );
+      } else {
+        setCameraError("Camera unavailable. You can upload an image file instead.");
+      }
       setCameraActive(false);
     }
   };
@@ -601,23 +617,43 @@ export default function ScanClient({ profile }: ScanClientProps) {
               }}
             >
               {cameraActive ? (
-                <div style={{ position: "relative", width: "100%", height: 320 }}>
+                /* ── Viewfinder: 4:3 aspect, rounded 16px, 1px var(--line) border ── */
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    aspectRatio: "4/3",
+                    background: "#000",
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    border: "1px solid var(--line)",
+                  }}
+                >
                   <video
                     ref={videoRef}
+                    autoPlay
                     playsInline
                     muted
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
                   />
                   {/* Target overlay reticle */}
                   <div
                     style={{
                       position: "absolute",
-                      inset: 40,
+                      inset: 32,
                       border: "1px dashed rgba(185,154,101,0.5)",
                       borderRadius: 12,
                       pointerEvents: "none",
                     }}
                   />
+                  {/* Close button */}
                   <button
                     onClick={stopCamera}
                     style={{
@@ -628,7 +664,8 @@ export default function ScanClient({ profile }: ScanClientProps) {
                       border: "none",
                       borderRadius: "50%",
                       color: "#fff",
-                      padding: 8,
+                      width: 36,
+                      height: 36,
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -636,6 +673,30 @@ export default function ScanClient({ profile }: ScanClientProps) {
                     }}
                   >
                     <X size={18} />
+                  </button>
+                  {/* Circular capture button */}
+                  <button
+                    id="scan-shutter-btn"
+                    onClick={capturePhoto}
+                    title="Capture photo"
+                    style={{
+                      position: "absolute",
+                      bottom: 20,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: 64,
+                      height: 64,
+                      borderRadius: "50%",
+                      background: "#fff",
+                      border: "4px solid rgba(255,255,255,0.4)",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Camera size={24} style={{ color: "#0b0f12" }} />
                   </button>
                 </div>
               ) : previewUrl ? (
@@ -739,27 +800,8 @@ export default function ScanClient({ profile }: ScanClientProps) {
                   <Sparkles size={18} /> Identify Monument
                 </button>
               ) : cameraActive ? (
-                <button
-                  id="scan-shutter-btn"
-                  onClick={capturePhoto}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    gridColumn: "1 / -1",
-                    background: "#fff",
-                    color: "#0b0f12",
-                    border: "none",
-                    borderRadius: 999,
-                    padding: "14px",
-                    fontSize: "0.9375rem",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                  }}
-                >
-                  <Camera size={18} /> Capture Photo
-                </button>
+                /* Shutter is now inside the viewfinder; show nothing here */
+                null
               ) : (
                 <>
                   <button
