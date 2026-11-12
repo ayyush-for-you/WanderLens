@@ -2,12 +2,6 @@
 
 > **A modern, privacy-first full-stack Progressive Web Application (PWA) combining Computer Vision monument recognition, auditable hidden-gem recommendations, destination community chat, and ephemeral geolocation safety networks.**
 
-[![GitHub Repository](https://img.shields.io/badge/GitHub-ayyush--for--you%2FWanderLens-181717?style=for-the-badge&logo=github)](https://github.com/ayyush-for-you/WanderLens.git)
-[![Live Cloud Demo](https://img.shields.io/badge/Live%20Demo-wanderlens--app.vercel.app-00C9A7?style=for-the-badge&logo=vercel)](https://github.com/ayyush-for-you/WanderLens.git)
-[![Next.js 16](https://img.shields.io/badge/Next.js%2016-React%2019-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL%2015+-PostGIS%20%2B%20pgvector-336791?style=for-the-badge&logo=postgresql)](https://supabase.com/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-OpenCLIP%20ViT--B%2F32-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 ---
 
