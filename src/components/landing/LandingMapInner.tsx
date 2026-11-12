@@ -34,11 +34,10 @@ export default function LandingMapInner({ monuments, onSelect }: LandingMapInner
       scrollWheelZoom: false,
     });
 
-    // DarkMatter / Google tiles
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; CARTO &copy; OpenStreetMap',
-      subdomains: "abcd",
-      maxZoom: 20,
+    // OpenStreetMap tile layer with dark styling
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
     }).addTo(map);
 
     monuments.forEach((mon) => {
@@ -90,5 +89,5 @@ export default function LandingMapInner({ monuments, onSelect }: LandingMapInner
     };
   }, [monuments, onSelect]);
 
-  return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
+  return <div ref={containerRef} className="wl-dark-map" style={{ width: "100%", height: "100%" }} />;
 }

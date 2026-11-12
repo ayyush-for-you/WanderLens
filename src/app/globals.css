@@ -481,6 +481,63 @@ h1, h2, h3, h4 {
   100% { transform: scale(2.5); opacity: 0; }
 }
 
+/* ─── Leaflet Dark Maps & Controls (.wl-dark-map) ────────────────── */
+.wl-dark-map {
+  background: var(--ink) !important;
+}
+
+.wl-dark-map .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.55);
+}
+
+.wl-dark-map .leaflet-control-zoom {
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+.wl-dark-map .leaflet-control-zoom a {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border-bottom: 1px solid var(--line) !important;
+  backdrop-filter: blur(22px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(140%) !important;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.wl-dark-map .leaflet-control-zoom a:last-child {
+  border-bottom: none !important;
+}
+
+.wl-dark-map .leaflet-control-zoom a:hover,
+.wl-dark-map .leaflet-control-zoom a:focus {
+  background: var(--hover) !important;
+  color: #ffffff !important;
+}
+
+.wl-dark-map .leaflet-control-attribution {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  color: var(--text) !important;
+  backdrop-filter: blur(22px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(140%) !important;
+  padding: 3px 8px !important;
+  margin: 8px !important;
+  font-size: 11px !important;
+}
+
+.wl-dark-map .leaflet-control-attribution a {
+  color: var(--soft) !important;
+  text-decoration: none !important;
+}
+
+.wl-dark-map .leaflet-control-attribution a:hover {
+  color: #ffffff !important;
+  text-decoration: underline !important;
+}
+
 .leaflet-container {
   background: #0E1522 !important;
   font-family: 'Manrope', sans-serif !important;

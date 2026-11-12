@@ -34,26 +34,11 @@ export default function SoloMap({ coords }: SoloMapProps) {
       zoomControl: true,
     });
 
-    // Real Google Maps Road Tile Layer
-    const googleLayer = L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
-      attribution: '&copy; Google Maps',
-      maxZoom: 20,
-      subdomains: ["mt0", "mt1", "mt2", "mt3"],
-    });
-
-    // Dark Matter tile layer
-    const darkLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; CARTO &copy; OpenStreetMap',
-      maxZoom: 20,
-      subdomains: "abcd",
-    });
-
-    // Add selected layer
-    if (mapType === "google") {
-      googleLayer.addTo(map);
-    } else {
-      darkLayer.addTo(map);
-    }
+    // OpenStreetMap Tile Layer with dark styling
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
 
     // Call invalidateSize so dimensions render smoothly
     setTimeout(() => {
@@ -104,6 +89,7 @@ export default function SoloMap({ coords }: SoloMapProps) {
     <div style={{ position: "relative", width: "100%", height: "calc(100vh - 64px - 36px)", minHeight: 400 }}>
       <div
         ref={containerRef}
+        className="wl-dark-map"
         style={{ width: "100%", height: "100%" }}
       />
     </div>

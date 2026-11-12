@@ -53,11 +53,10 @@ export default function DiscoverMap({
       zoomControl: true,
     });
 
-    // Real Google Maps Streets Layer
-    L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
-      attribution: '&copy; Google Maps',
-      maxZoom: 20,
-      subdomains: ["mt0", "mt1", "mt2", "mt3"],
+    // OpenStreetMap Tile Layer with dark styling
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
     }).addTo(map);
 
     setTimeout(() => {
@@ -148,6 +147,7 @@ export default function DiscoverMap({
     >
       <div
         ref={containerRef}
+        className="wl-dark-map"
         style={{ width: "100%", height: "100%" }}
       />
 
