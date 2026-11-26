@@ -118,6 +118,8 @@ export default function ScanClient({ profile }: ScanClientProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // Holds the stream between getUserMedia and the render where <video> appears
+  const pendingStreamRef = useRef<MediaStream | null>(null);
 
   // Load saved scans from localStorage
   useEffect(() => {
@@ -160,11 +162,8 @@ export default function ScanClient({ profile }: ScanClientProps) {
         video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // autoPlay handles play() on iOS/Safari; this is a belt-and-suspenders fallback
-        videoRef.current.play().catch(() => {/* silently ignored – autoPlay handles it */});
-      }
+      // Store stream so the useEffect below can attach it once <video> is in the DOM
+      pendingStreamRef.current = stream;
       setCameraActive(true);
     } catch (err: any) {
       console.warn("Camera access denied or unavailable:", err);
@@ -184,8 +183,22 @@ export default function ScanClient({ profile }: ScanClientProps) {
     }
   };
 
+  // Once cameraActive flips to true the <video> is rendered; attach the stream now
+  useEffect(() => {
+    if (cameraActive && videoRef.current && pendingStreamRef.current) {
+      videoRef.current.srcObject = pendingStreamRef.current;
+      pendingStreamRef.current = null;
+      videoRef.current.play().catch(() => {/* autoPlay + playsInline handles iOS/Safari */});
+    }
+  }, [cameraActive]);
+
   // Stop Camera
   const stopCamera = () => {
+    // Stop any pending (not yet attached) stream
+    if (pendingStreamRef.current) {
+      pendingStreamRef.current.getTracks().forEach((t) => t.stop());
+      pendingStreamRef.current = null;
+    }
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach((track) => track.stop());
@@ -616,90 +629,93 @@ export default function ScanClient({ profile }: ScanClientProps) {
                 justifyContent: "center",
               }}
             >
-              {cameraActive ? (
-                /* ── Viewfinder: 4:3 aspect, rounded 16px, 1px var(--line) border ── */
+              {/* ── Always-mounted video element so ref is never null ──────── */}
+              <div
+                style={{
+                  display: cameraActive ? "block" : "none",
+                  position: "relative",
+                  width: "100%",
+                  aspectRatio: "4/3",
+                  background: "#000",
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                {/* video has no ref here — the ref is on the always-mounted element above */}
+                <video
+                  autoPlay
+                  playsInline
+                  muted
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                    background: "#000",
+                  }}
+                />
+                {/* Target overlay reticle */}
                 <div
                   style={{
-                    position: "relative",
-                    width: "100%",
-                    aspectRatio: "4/3",
-                    background: "#000",
-                    borderRadius: 16,
-                    overflow: "hidden",
-                    border: "1px solid var(--line)",
+                    position: "absolute",
+                    inset: 32,
+                    border: "1px dashed rgba(185,154,101,0.5)",
+                    borderRadius: 12,
+                    pointerEvents: "none",
+                  }}
+                />
+                {/* Close button */}
+                <button
+                  onClick={stopCamera}
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    right: 12,
+                    background: "rgba(0,0,0,0.6)",
+                    border: "none",
+                    borderRadius: "50%",
+                    color: "#fff",
+                    width: 36,
+                    height: 36,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      display: "block",
-                    }}
-                  />
-                  {/* Target overlay reticle */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 32,
-                      border: "1px dashed rgba(185,154,101,0.5)",
-                      borderRadius: 12,
-                      pointerEvents: "none",
-                    }}
-                  />
-                  {/* Close button */}
-                  <button
-                    onClick={stopCamera}
-                    style={{
-                      position: "absolute",
-                      top: 12,
-                      right: 12,
-                      background: "rgba(0,0,0,0.6)",
-                      border: "none",
-                      borderRadius: "50%",
-                      color: "#fff",
-                      width: 36,
-                      height: 36,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <X size={18} />
-                  </button>
-                  {/* Circular capture button */}
-                  <button
-                    id="scan-shutter-btn"
-                    onClick={capturePhoto}
-                    title="Capture photo"
-                    style={{
-                      position: "absolute",
-                      bottom: 20,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      width: 64,
-                      height: 64,
-                      borderRadius: "50%",
-                      background: "#fff",
-                      border: "4px solid rgba(255,255,255,0.4)",
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Camera size={24} style={{ color: "#0b0f12" }} />
-                  </button>
-                </div>
-              ) : previewUrl ? (
+                  <X size={18} />
+                </button>
+                {/* Circular capture button */}
+                <button
+                  id="scan-shutter-btn"
+                  onClick={capturePhoto}
+                  title="Capture photo"
+                  style={{
+                    position: "absolute",
+                    bottom: 20,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 64,
+                    height: 64,
+                    borderRadius: "50%",
+                    background: "#fff",
+                    border: "4px solid rgba(255,255,255,0.4)",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Camera size={24} style={{ color: "#0b0f12" }} />
+                </button>
+              </div>
+
+              {/* Preview after capture */}
+              {!cameraActive && previewUrl && (
                 <div style={{ position: "relative", width: "100%", maxHeight: 340 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -728,7 +744,10 @@ export default function ScanClient({ profile }: ScanClientProps) {
                     <X size={18} />
                   </button>
                 </div>
-              ) : (
+              )}
+
+              {/* Idle placeholder — no camera, no preview */}
+              {!cameraActive && !previewUrl && (
                 <div style={{ padding: "48px 24px", textAlign: "center" }}>
                   <div
                     style={{
