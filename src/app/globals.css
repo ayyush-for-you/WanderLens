@@ -772,3 +772,8 @@ select, select:focus { color-scheme: dark !important; }
 select option, select optgroup { background-color: #0e1317 !important; color: #ffffff !important; }
 input[type="date"], input[type="time"], input[type="datetime-local"] { color-scheme: dark; }
 
+/* ─── SOS Modal — pointer-event safety net ───────────────────────── */
+/* The 80px SVG progress ring sits absolutely above the HOLD button.  */
+/* Make sure it never intercepts pointer/touch events.                */
+.modal-card-danger svg[width="80"] { pointer-events: none; }
+

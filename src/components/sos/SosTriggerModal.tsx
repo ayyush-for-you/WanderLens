@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, AlertTriangle, Phone } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface SosTriggerModalProps {
@@ -11,16 +11,25 @@ interface SosTriggerModalProps {
 }
 
 export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProps) {
-  const [message, setMessage]       = useState("");
-  const [progress, setProgress]     = useState(0);
-  const [sent, setSent]             = useState(false);
-  const [loading, setLoading]       = useState(false);
+  const [message, setMessage]           = useState("");
+  const [progress, setProgress]         = useState(0);
+  const [sent, setSent]                 = useState(false);
+  const [loading, setLoading]           = useState(false);
+  const [recipientCount, setRecipientCount] = useState<number | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
   const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-  const holdTimeout  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const HOLD_MS = 1000; // 1 second hold-to-confirm (PRD §3 Screen 7)
 
+  // Detect if coords are null because permission was denied vs simply loading
+  // We surface a denied state if the browser exposes it (best-effort).
+  // The parent component is expected to pass null for both "loading" and
+  // "denied". We rely on the message to distinguish.
+  // (If you want precise denial detection, wire it up in the parent and pass
+  //  a prop; this component handles whatever null means gracefully.)
+
   const startHold = useCallback(() => {
+    if (!coords || loading || sent) return;
     holdInterval.current = setInterval(() => {
       setProgress((p) => {
         const next = p + 100 / (HOLD_MS / 50);
@@ -32,23 +41,27 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
         return next;
       });
     }, 50);
-  }, [message, coords]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message, coords, loading, sent]);
 
   const cancelHold = useCallback(() => {
     if (holdInterval.current) clearInterval(holdInterval.current);
-    if (holdTimeout.current) clearTimeout(holdTimeout.current);
     setProgress(0);
   }, []);
 
   const handleSend = async () => {
     if (loading || sent) return;
+    // Safety guard: never send 0,0 as coordinates
+    if (!coords) {
+      toast.error("Cannot send SOS without a valid location.");
+      setProgress(0);
+      return;
+    }
     setLoading(true);
     try {
-      // Build body: use `latitude`/`longitude` as the route expects.
-      // Omit `note` entirely when empty so the route stores null itself.
       const body: Record<string, unknown> = {
-        latitude: coords?.lat ?? 0,
-        longitude: coords?.lng ?? 0,
+        latitude: coords.lat,
+        longitude: coords.lng,
       };
       const trimmedNote = message.trim().slice(0, 200);
       if (trimmedNote) body.note = trimmedNote;
@@ -60,15 +73,17 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
       });
       const data = await res.json();
       if (!res.ok) {
-        // Show the server's exact error message so the user knows what went wrong.
         toast.error(data.error || "Failed to send SOS");
         setLoading(false);
         setProgress(0);
         return;
       }
+      // Capture the recipient count if the API returns it
+      const count = typeof data.recipients === "number" ? data.recipients : null;
+      setRecipientCount(count);
       setSent(true);
       toast.success("SOS sent successfully.");
-      setTimeout(onClose, 2000);
+      setTimeout(onClose, 3000);
     } catch {
       toast.error("Network error. Please try again.");
       setLoading(false);
@@ -77,6 +92,9 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
   };
 
   const circumference = 2 * Math.PI * 34; // r=34
+
+  // Determine what to show for the location status
+  const noCoords = !coords;
 
   return (
     <motion.div
@@ -106,14 +124,16 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
           )}
         </div>
 
-        {/* Location */}
+        {/* Location status */}
         {coords ? (
           <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(108,99,255,0.08)", border: "1px solid rgba(108,99,255,0.2)", marginBottom: 16, fontSize: "0.85rem" }}>
             📍 {coords.lat.toFixed(4)}°N, {coords.lng.toFixed(4)}°E
           </div>
         ) : (
           <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)", marginBottom: 16, fontSize: "0.85rem", color: "#fbbf24" }}>
-            ⚠ Location unavailable — SOS will be sent without coordinates
+            {locationDenied
+              ? "⛔ Location access was denied. Please enable it in your browser settings and reopen this modal."
+              : "⏳ Waiting for your location…"}
           </div>
         )}
 
@@ -148,7 +168,12 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
             style={{ textAlign: "center", padding: "16px 0" }}
           >
             {/* Checkmark SVG */}
-            <svg width="60" height="60" viewBox="0 0 60 60" style={{ margin: "0 auto 12px", display: "block" }}>
+            <svg
+              width="60"
+              height="60"
+              viewBox="0 0 60 60"
+              style={{ margin: "0 auto 12px", display: "block", pointerEvents: "none" }}
+            >
               <circle cx="30" cy="30" r="28" fill="none" stroke="rgba(0,201,167,0.3)" strokeWidth="2" />
               <motion.path
                 d="M18 30 L26 38 L42 22"
@@ -163,7 +188,17 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
               />
             </svg>
             <p style={{ color: "#00C9A7", fontWeight: 600 }}>SOS sent successfully!</p>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: 6 }}>Nearby travellers have been notified.</p>
+            {recipientCount === null || recipientCount > 0 ? (
+              <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: 6 }}>
+                {recipientCount !== null
+                  ? `${recipientCount} nearby helper${recipientCount === 1 ? "" : "s"} notified.`
+                  : "Nearby travellers have been notified."}
+              </p>
+            ) : (
+              <p style={{ color: "#fbbf24", fontSize: "0.8rem", marginTop: 6 }}>
+                No nearby opted-in helpers right now.
+              </p>
+            )}
           </motion.div>
         ) : (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -173,7 +208,12 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
 
             {/* Hold-to-confirm button with circular progress ring */}
             <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="80" height="80" style={{ position: "absolute", transform: "rotate(-90deg)" }}>
+              {/* SVG ring — pointer-events:none so it never intercepts clicks */}
+              <svg
+                width="80"
+                height="80"
+                style={{ position: "absolute", transform: "rotate(-90deg)", pointerEvents: "none" }}
+              >
                 <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,107,107,0.2)" strokeWidth="4" />
                 <motion.circle
                   cx="40"
@@ -187,19 +227,66 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
                   strokeDashoffset={circumference - (progress / 100) * circumference}
                 />
               </svg>
-              <button
-                className="btn btn-danger"
-                style={{ width: 60, height: 60, borderRadius: "50%", padding: 0, fontSize: "0.75rem", fontWeight: 700, flexDirection: "column", gap: 2 }}
-                onMouseDown={startHold}
-                onMouseUp={cancelHold}
-                onMouseLeave={cancelHold}
-                onTouchStart={startHold}
-                onTouchEnd={cancelHold}
-                disabled={loading}
-              >
-                🆘
-                <span style={{ fontSize: "0.6rem" }}>HOLD</span>
-              </button>
+
+              {noCoords ? (
+                /* Disabled state when location is not yet available */
+                <button
+                  className="btn btn-danger"
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: "50%",
+                    padding: 0,
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    flexDirection: "column",
+                    gap: 2,
+                    opacity: 0.5,
+                    cursor: "not-allowed",
+                    position: "relative",
+                    zIndex: 1,
+                    touchAction: "none",
+                    userSelect: "none",
+                  }}
+                  disabled
+                  title="Waiting for your location…"
+                >
+                  🆘
+                  <span style={{ fontSize: "0.55rem" }}>WAIT…</span>
+                </button>
+              ) : (
+                <button
+                  className="btn btn-danger"
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: "50%",
+                    padding: 0,
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    flexDirection: "column",
+                    gap: 2,
+                    // Sit above the absolutely-positioned SVG ring
+                    position: "relative",
+                    zIndex: 1,
+                    // Prevent text selection and browser touch callout while holding
+                    touchAction: "none",
+                    userSelect: "none",
+                  }}
+                  // Pointer events work for both mouse and touch
+                  onPointerDown={(e) => {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    startHold();
+                  }}
+                  onPointerUp={cancelHold}
+                  onPointerLeave={cancelHold}
+                  onPointerCancel={cancelHold}
+                  disabled={loading}
+                >
+                  🆘
+                  <span style={{ fontSize: "0.6rem" }}>HOLD</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -217,4 +304,3 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
     </motion.div>
   );
 }
-
