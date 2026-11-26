@@ -118,8 +118,8 @@ export default function ScanClient({ profile }: ScanClientProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  // Holds the stream between getUserMedia and the render where <video> appears
-  const pendingStreamRef = useRef<MediaStream | null>(null);
+  // Stream kept in state so the useEffect([stream]) can run after every render
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   // Load saved scans from localStorage
   useEffect(() => {
@@ -158,12 +158,11 @@ export default function ScanClient({ profile }: ScanClientProps) {
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
-      // Store stream so the useEffect below can attach it once <video> is in the DOM
-      pendingStreamRef.current = stream;
+      setStream(mediaStream);
       setCameraActive(true);
     } catch (err: any) {
       console.warn("Camera access denied or unavailable:", err);
@@ -183,34 +182,33 @@ export default function ScanClient({ profile }: ScanClientProps) {
     }
   };
 
-  // Once cameraActive flips to true the <video> is rendered; attach the stream now
+  // Attach stream to <video> whenever stream changes (after React renders the ref)
   useEffect(() => {
-    if (cameraActive && videoRef.current && pendingStreamRef.current) {
-      videoRef.current.srcObject = pendingStreamRef.current;
-      pendingStreamRef.current = null;
+    if (!videoRef.current) return;
+    if (stream) {
+      videoRef.current.srcObject = stream;
       videoRef.current.play().catch(() => {/* autoPlay + playsInline handles iOS/Safari */});
-    }
-  }, [cameraActive]);
-
-  // Stop Camera
-  const stopCamera = () => {
-    // Stop any pending (not yet attached) stream
-    if (pendingStreamRef.current) {
-      pendingStreamRef.current.getTracks().forEach((t) => t.stop());
-      pendingStreamRef.current = null;
-    }
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach((track) => track.stop());
+    } else {
       videoRef.current.srcObject = null;
+    }
+  }, [stream]);
+
+  // Stop Camera — stops tracks and clears stream state
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      setStream(null);
     }
     setCameraActive(false);
   };
 
-  // Cleanup camera stream on unmount
+  // Cleanup camera stream on unmount only
   useEffect(() => {
     return () => {
-      stopCamera();
+      // Use the ref-captured stream value to avoid stale closure issues
+      if (videoRef.current?.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
+      }
     };
   }, []);
 
@@ -642,8 +640,9 @@ export default function ScanClient({ profile }: ScanClientProps) {
                   border: "1px solid var(--line)",
                 }}
               >
-                {/* video has no ref here — the ref is on the always-mounted element above */}
+                {/* ref is attached — stream is set via useEffect([stream]) */}
                 <video
+                  ref={videoRef}
                   autoPlay
                   playsInline
                   muted
