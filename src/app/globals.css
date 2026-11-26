@@ -749,12 +749,8 @@ h1, h2, h3, h4 {
   }
 }
 
-select {
-  color-scheme: dark !important;
-}
-select option,
-select optgroup {
-  background-color: #0e1317 !important;
-  color: #ffffff !important;
-}
+.leaflet-container { position: relative; z-index: 0; isolation: isolate; }
+select, select:focus { color-scheme: dark !important; }
+select option, select optgroup { background-color: #0e1317 !important; color: #ffffff !important; }
+input[type="date"], input[type="time"], input[type="datetime-local"] { color-scheme: dark; }
 
