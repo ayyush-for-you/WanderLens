@@ -564,13 +564,31 @@ h1, h2, h3, h4 {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #E76F51;
+  background: var(--danger);
   border: none;
   cursor: pointer;
   color: white;
   font-size: 1.5rem;
-  box-shadow: 0 4px 20px rgba(231, 111, 81, 0.5);
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.55);
   transition: transform 0.2s ease;
+}
+
+/* Fixed SOS trigger — always visible above map and bottom nav ──────── */
+/* Mobile-first: sits 88 px from bottom so it clears the 68 px bottom  */
+/* nav + 20 px breathing room. On desktop (≥861 px, no bottom nav)     */
+/* collapses to 24 px from bottom.                                      */
+.sos-btn-fixed {
+  position: fixed !important;
+  right: 20px;
+  bottom: 88px; /* above mobile bottom nav (68 px) + 20 px gap */
+  z-index: 60;  /* above map (0), status-bar (10), leaflet controls (<10), below modals (200) */
+}
+
+@media (min-width: 861px) {
+  .sos-btn-fixed {
+    right: 24px;
+    bottom: 24px;
+  }
 }
 
 .pw-strength-bar {

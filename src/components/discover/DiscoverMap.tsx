@@ -134,13 +134,18 @@ export default function DiscoverMap({
   }, [places]);
 
   return (
+    /* ── Map container: forms its own stacking context so the map tiles
+       never bleed above overlays rendered outside this element.
+       clamp height: 360 px min, 60 vh preferred, 640 px max. ────────── */
     <div
       className="card"
       style={{
         padding: 0,
         overflow: "hidden",
         position: "relative",
-        height: 420,
+        isolation: "isolate",
+        zIndex: 0,
+        height: "clamp(360px, 60vh, 640px)",
         borderRadius: 16,
         border: "1px solid var(--border)",
       }}

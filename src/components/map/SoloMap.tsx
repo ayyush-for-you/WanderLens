@@ -86,7 +86,21 @@ export default function SoloMap({ coords }: SoloMapProps) {
   }, [coords]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "calc(100vh - 64px - 36px)", minHeight: 400 }}>
+    /* ── Map container: isolation + z-index 0 keep the map tiles inside
+       their own stacking context so the SOS button (fixed, z-index 60)
+       is always painted above the map. ─────────────────────────────── */
+    <div
+      style={{
+        position: "relative",
+        isolation: "isolate",
+        zIndex: 0,
+        overflow: "hidden",
+        borderRadius: 16,
+        width: "100%",
+        height: "calc(100vh - 64px - 36px)",
+        minHeight: 400,
+      }}
+    >
       <div
         ref={containerRef}
         className="wl-dark-map"

@@ -130,11 +130,14 @@ export default function SoloDashboard({ profile }: SoloDashboardProps) {
             <LeafletMap coords={coords} />
           </div>
 
-          {/* SOS Floating Button */}
+          {/* SOS Floating Button — fixed so it always clears the bottom nav
+              and the map regardless of scroll / overflow on its parent.
+              Mobile: right 20px, bottom 88px (above the 68px bottom nav + safe area).
+              Desktop (≥861px): right 24px, bottom 24px.
+              z-index 60 sits above map (0) and status-bar (10) but below modals (200). */}
           <motion.button
-            className="sos-btn"
+            className="sos-btn sos-btn-fixed"
             onClick={() => setSosOpen(true)}
-            style={{ position: "absolute", bottom: 60, right: 20, zIndex: 50 }}
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             aria-label="Trigger SOS"
