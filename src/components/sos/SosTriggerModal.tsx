@@ -44,17 +44,23 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
     if (loading || sent) return;
     setLoading(true);
     try {
+      // Build body: use `latitude`/`longitude` as the route expects.
+      // Omit `note` entirely when empty so the route stores null itself.
+      const body: Record<string, unknown> = {
+        latitude: coords?.lat ?? 0,
+        longitude: coords?.lng ?? 0,
+      };
+      const trimmedNote = message.trim().slice(0, 200);
+      if (trimmedNote) body.note = trimmedNote;
+
       const res = await fetch("/api/sos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lat: coords?.lat ?? 0,
-          lng: coords?.lng ?? 0,
-          message: message.trim() || null,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) {
+        // Show the server's exact error message so the user knows what went wrong.
         toast.error(data.error || "Failed to send SOS");
         setLoading(false);
         setProgress(0);
@@ -124,7 +130,7 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
               placeholder="e.g. I need help near the main gate"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              maxLength={120}
+              maxLength={200}
             />
           </div>
         )}
