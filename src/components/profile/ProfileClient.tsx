@@ -34,13 +34,86 @@ export default function ProfileClient({ profile, email }: ProfileClientProps) {
 
   const toggleSos = async () => {
     const newVal = !sosOptIn;
-    setSosOptIn(newVal);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ sos_opt_in: newVal })
-      .eq("id", profile.id);
-    if (error) { toast.error(error.message); setSosOptIn(!newVal); }
-    else { toast.success(newVal ? "SOS alerts enabled" : "SOS alerts disabled"); }
+    setSosOptIn(newVal); // optimistic
+
+    if (newVal) {
+      // Opt-in: we must write a user_presence row via /api/sos/presence
+      // so the SQL function can find this user when others send SOS.
+      if (!("geolocation" in navigator)) {
+        toast.error("Geolocation is not supported by your browser. SOS opt-in needs location.");
+        setSosOptIn(!newVal); // revert
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const res = await fetch("/api/sos/presence", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                opt_in: true,
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+              }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+              toast.error(data.error || "Failed to enable SOS alerts");
+              setSosOptIn(false); // revert — server didn't save
+            } else {
+              // Re-read from DB to confirm
+              const { data: row, error } = await supabase
+                .from("profiles")
+                .select("sos_opt_in")
+                .eq("id", profile.id)
+                .single();
+              if (error) { toast.error(error.message); setSosOptIn(!newVal); }
+              else {
+                setSosOptIn(row?.sos_opt_in ?? false);
+                toast.success("SOS alerts enabled");
+              }
+            }
+          } catch (err: any) {
+            toast.error(err.message || "Failed to enable SOS alerts");
+            setSosOptIn(!newVal);
+          }
+        },
+        (err) => {
+          toast.error(`Location permission required: ${err.message}`);
+          setSosOptIn(!newVal); // revert
+        },
+        { enableHighAccuracy: false, timeout: 10000 }
+      );
+    } else {
+      // Opt-out: call presence API to delete the presence row and set flag false
+      try {
+        const res = await fetch("/api/sos/presence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ opt_in: false }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error || "Failed to disable SOS alerts");
+          setSosOptIn(!newVal);
+        } else {
+          // Re-read from DB to confirm
+          const { data: row, error } = await supabase
+            .from("profiles")
+            .select("sos_opt_in")
+            .eq("id", profile.id)
+            .single();
+          if (error) { toast.error(error.message); setSosOptIn(!newVal); }
+          else {
+            setSosOptIn(row?.sos_opt_in ?? false);
+            toast.success("SOS alerts disabled");
+          }
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to disable SOS alerts");
+        setSosOptIn(!newVal);
+      }
+    }
   };
 
   const handleResendVerification = async () => {

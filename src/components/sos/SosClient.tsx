@@ -16,6 +16,8 @@ import {
   RefreshCw,
   Navigation,
   Info,
+  UserCheck,
+  WifiOff,
 } from "lucide-react";
 import { SOS_RATE_LIMIT_PER_HOUR, SOS_RADIUS_METRES } from "@/config/constants";
 
@@ -43,6 +45,9 @@ interface MyActiveSos {
   }>;
 }
 
+// Location state for eligibility status line
+type LocationState = "waiting" | "denied" | "ready";
+
 export default function SosClient() {
   const [optedIn, setOptedIn] = useState(false);
   const [isPresenceActive, setIsPresenceActive] = useState(false);
@@ -57,8 +62,10 @@ export default function SosClient() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [revealedCoords, setRevealedCoords] = useState<Record<string, { lat: number; lng: number }>>({});
+  const [locationState, setLocationState] = useState<LocationState>("waiting");
 
   const presenceIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -78,14 +85,16 @@ export default function SosClient() {
     }
   }, []);
 
+  // Poll GET /api/sos every 10 seconds while page is open
   useEffect(() => {
     fetchStatus();
-    // Refresh incoming alerts every 5 seconds for responsive safety delivery
-    const interval = setInterval(fetchStatus, 5000);
-    return () => clearInterval(interval);
+    pollIntervalRef.current = setInterval(fetchStatus, 10_000);
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
   }, [fetchStatus]);
 
-  // Keep presence alive if optedIn is true
+  // Keep presence alive — call POST /api/sos/presence on mount and every 5 minutes
   useEffect(() => {
     if (!optedIn) {
       if (presenceIntervalRef.current) {
@@ -96,32 +105,38 @@ export default function SosClient() {
     }
 
     const refreshPresence = () => {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            try {
-              await fetch("/api/sos/presence", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  opt_in: true,
-                  latitude: pos.coords.latitude,
-                  longitude: pos.coords.longitude,
-                }),
-              });
-            } catch (err) {
-              console.error("Failed to refresh presence:", err);
-            }
-          },
-          (err) => console.warn("Presence GPS error:", err.message),
-          { timeout: 8000, maximumAge: 10000 }
-        );
+      if (!("geolocation" in navigator)) {
+        setLocationState("denied");
+        return;
       }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          setLocationState("ready");
+          try {
+            await fetch("/api/sos/presence", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                opt_in: true,
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+              }),
+            });
+          } catch (err) {
+            console.error("Failed to refresh presence:", err);
+          }
+        },
+        (err) => {
+          console.warn("Presence GPS error:", err.message);
+          setLocationState("denied");
+        },
+        { timeout: 8000, maximumAge: 10000 }
+      );
     };
 
-    // Immediate ping + every 10 minutes (TTL is 30m)
+    // Immediate ping + every 5 minutes (TTL is 30m)
     refreshPresence();
-    presenceIntervalRef.current = setInterval(refreshPresence, 10 * 60 * 1000);
+    presenceIntervalRef.current = setInterval(refreshPresence, 5 * 60 * 1000);
 
     return () => {
       if (presenceIntervalRef.current) {
@@ -130,6 +145,16 @@ export default function SosClient() {
       }
     };
   }, [optedIn]);
+
+  // Determine eligibility status for the status line
+  const eligibilityLine = (() => {
+    if (!isVerified) return { ok: false, reason: "Account not verified — verify your email to receive alerts." };
+    if (!optedIn) return { ok: false, reason: "SOS opt-in is off — toggle \"Opt In\" above to receive alerts." };
+    if (locationState === "denied") return { ok: false, reason: "Location permission denied — allow location access to receive alerts." };
+    if (locationState === "waiting") return { ok: false, reason: "Waiting for location…" };
+    if (!isPresenceActive) return { ok: false, reason: "Presence row not yet active — refreshing…" };
+    return { ok: true, reason: "You will receive nearby alerts." };
+  })();
 
   // Toggle Opt-in
   const handleToggleOptIn = async () => {
@@ -233,7 +258,12 @@ export default function SosClient() {
           }
 
           setSosNote("");
-          setSuccessMsg(`SOS Broadcast sent! Alerted ${data.alert.recipient_count} nearby verified travellers.`);
+          const count = data?.alert?.recipient_count ?? 0;
+          if (count === 0) {
+            setSuccessMsg("SOS Broadcast sent! No nearby opted-in helpers right now.");
+          } else {
+            setSuccessMsg(`SOS Broadcast sent! Alerted ${count} nearby verified traveller${count === 1 ? "" : "s"}.`);
+          }
           fetchStatus();
         } catch (err: any) {
           setActionError(err.message || "Failed to trigger SOS");
@@ -587,6 +617,27 @@ export default function SosClient() {
             "Opt In"
           )}
         </button>
+      </div>
+
+      {/* Eligibility status line */}
+      <div
+        style={{
+          marginBottom: 20,
+          padding: "8px 14px",
+          borderRadius: 10,
+          background: eligibilityLine.ok
+            ? "rgba(16, 185, 129, 0.10)"
+            : "rgba(251, 191, 36, 0.10)",
+          border: `1px solid ${eligibilityLine.ok ? "rgba(16,185,129,0.3)" : "rgba(251,191,36,0.3)"}`,
+          fontSize: "0.8rem",
+          color: eligibilityLine.ok ? "#34d399" : "#fbbf24",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <Info size={14} style={{ flexShrink: 0 }} />
+        {eligibilityLine.reason}
       </div>
 
       {/* Incoming Nearby Alerts */}

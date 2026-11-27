@@ -78,8 +78,11 @@ export default function SosTriggerModal({ coords, onClose }: SosTriggerModalProp
         setProgress(0);
         return;
       }
-      // Capture the recipient count if the API returns it
-      const count = typeof data.recipients === "number" ? data.recipients : null;
+      // Capture the recipient count from the API response (data.alert.recipient_count)
+      const count =
+        typeof data?.alert?.recipient_count === "number"
+          ? data.alert.recipient_count
+          : null;
       setRecipientCount(count);
       setSent(true);
       toast.success("SOS sent successfully.");
