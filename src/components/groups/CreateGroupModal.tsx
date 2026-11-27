@@ -48,6 +48,8 @@ export default function CreateGroupModal({
     initialDestinationId || initialDestinations[0]?.id || ""
   );
   const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
+  const [destinationsLoading, setDestinationsLoading] = useState(false);
+  const [destinationsError, setDestinationsError] = useState<string | null>(null);
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [loading, setLoading] = useState(false);
@@ -79,13 +81,18 @@ export default function CreateGroupModal({
       return;
     }
 
+    let isMounted = true;
     const fetchDestinations = async () => {
       setDestinationsLoading(true);
       setDestinationsError(null);
       try {
         const supabase = createClient();
-        const { data } = await supabase.from("destinations").select("*").order("name");
-        if (data && data.length > 0) {
+        const { data, error: sbError } = await supabase
+          .from("destinations")
+          .select("*")
+          .order("name");
+        if (sbError) throw sbError;
+        if (isMounted && data && data.length > 0) {
           setDestinations(data as Destination[]);
           if (!destinationId) {
             setDestinationId(initialDestinationId || data[0].id);
@@ -104,6 +111,9 @@ export default function CreateGroupModal({
     };
 
     fetchDestinations();
+    return () => {
+      isMounted = false;
+    };
   }, [isOpen, initialDestinationId, destinationId, initialDestinations]);
 
   if (!isOpen) return null;
@@ -299,7 +309,13 @@ export default function CreateGroupModal({
               disabled={destinationsLoading}
             >
               <option value="" disabled>
-                {destinations.length === 0 ? "No destinations available" : "Select a destination"}
+                {destinationsLoading
+                  ? "Loading destinations..."
+                  : destinationsError
+                  ? "Error loading destinations"
+                  : destinations.length === 0
+                  ? "No destinations available"
+                  : "Select a destination"}
               </option>
               {destinations.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -307,11 +323,15 @@ export default function CreateGroupModal({
                 </option>
               ))}
             </select>
-            {destinations.length === 0 && (
+            {destinationsError ? (
+              <p style={{ fontSize: "0.75rem", color: "#fca5a5", margin: "6px 0 0" }}>
+                {destinationsError}
+              </p>
+            ) : destinations.length === 0 && !destinationsLoading ? (
               <p style={{ fontSize: "0.75rem", color: "#B99A65", margin: "6px 0 0" }}>
                 No destinations loaded yet. Make sure Supabase env vars are configured in .env.local.
               </p>
-            )}
+            ) : null}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

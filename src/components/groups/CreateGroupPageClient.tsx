@@ -45,6 +45,8 @@ export default function CreateGroupPageClient({
     preselectedDestinationId || initialDestinations[0]?.id || ""
   );
   const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
+  const [destinationsLoading, setDestinationsLoading] = useState(false);
+  const [destinationsError, setDestinationsError] = useState<string | null>(null);
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [communityMembers, setCommunityMembers] = useState<any[]>([]);
@@ -69,13 +71,18 @@ export default function CreateGroupPageClient({
   // Fetch destinations fallback if none provided
   useEffect(() => {
     if (initialDestinations.length > 0) return;
+    let isMounted = true;
     const fetchDestinations = async () => {
       setDestinationsLoading(true);
       setDestinationsError(null);
       try {
         const supabase = createClient();
-        const { data } = await supabase.from("destinations").select("*").order("name");
-        if (data && data.length > 0) {
+        const { data, error: sbError } = await supabase
+          .from("destinations")
+          .select("*")
+          .order("name");
+        if (sbError) throw sbError;
+        if (isMounted && data && data.length > 0) {
           setDestinations(data as Destination[]);
           if (!destinationId) {
             setDestinationId(preselectedDestinationId || data[0].id);
@@ -93,6 +100,9 @@ export default function CreateGroupPageClient({
       }
     };
     fetchDestinations();
+    return () => {
+      isMounted = false;
+    };
   }, [preselectedDestinationId, destinationId, initialDestinations]);
 
   // If created from a community, fetch community members to invite
@@ -301,9 +311,16 @@ export default function CreateGroupPageClient({
                 onChange={(e) => setDestinationId(e.target.value)}
                 style={{ ...inputStyle, cursor: "pointer" }}
                 required
+                disabled={destinationsLoading}
               >
                 <option value="" disabled>
-                  Select a destination
+                  {destinationsLoading
+                    ? "Loading destinations..."
+                    : destinationsError
+                    ? "Error loading destinations"
+                    : destinations.length === 0
+                    ? "No destinations available"
+                    : "Select a destination"}
                 </option>
                 {destinations.map((d) => (
                   <option key={d.id} value={d.id}>
@@ -311,6 +328,11 @@ export default function CreateGroupPageClient({
                   </option>
                 ))}
               </select>
+              {destinationsError && (
+                <p style={{ fontSize: "0.75rem", color: "#fca5a5", margin: "6px 0 0" }}>
+                  {destinationsError}
+                </p>
+              )}
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
