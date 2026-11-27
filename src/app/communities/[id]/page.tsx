@@ -51,9 +51,6 @@ export default async function CommunityPage({
 
   // Check if current user is member
   const isMember = (members || []).some((m) => m.user_id === user.id);
-  if (!isMember) {
-    redirect("/communities");
-  }
 
   // Fetch mutual blocks
   const { data: blocks } = await supabase
@@ -69,18 +66,21 @@ export default async function CommunityPage({
     }
   }
 
-  // Fetch initial messages
-  const { data: rawMessages } = await supabase
-    .from("messages")
-    .select("*, profiles(id, display_name, avatar_url, role)")
-    .eq("community_id", communityId)
-    .eq("is_hidden", false)
-    .order("created_at", { ascending: true })
-    .limit(80);
+  // Fetch initial messages only if user is already a member
+  let initialMessages: any[] = [];
+  if (isMember) {
+    const { data: rawMessages } = await supabase
+      .from("messages")
+      .select("*, profiles(id, display_name, avatar_url, role)")
+      .eq("community_id", communityId)
+      .eq("is_hidden", false)
+      .order("created_at", { ascending: true })
+      .limit(80);
 
-  const initialMessages = (rawMessages || []).filter(
-    (m: any) => !blockedUserIds.includes(m.user_id)
-  );
+    initialMessages = (rawMessages || []).filter(
+      (m: any) => !blockedUserIds.includes(m.user_id)
+    );
+  }
 
   return (
     <>
@@ -91,6 +91,7 @@ export default async function CommunityPage({
           initialCommunity={community}
           initialMessages={initialMessages}
           initialMembers={members || []}
+          initialIsMember={isMember}
           profile={profile}
         />
       </main>

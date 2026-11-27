@@ -23,6 +23,7 @@ interface CommunityChatClientProps {
   initialCommunity: any;
   initialMessages: any[];
   initialMembers: any[];
+  initialIsMember?: boolean;
   profile: Profile | null;
 }
 
@@ -38,8 +39,11 @@ export default function CommunityChatClient({
   initialCommunity,
   initialMessages,
   initialMembers,
+  initialIsMember = true,
   profile,
 }: CommunityChatClientProps) {
+  const [isMember, setIsMember] = useState(initialIsMember);
+  const [joiningInvite, setJoiningInvite] = useState(false);
   const [community] = useState(initialCommunity);
   const [messages, setMessages] = useState<any[]>(initialMessages);
   const [members] = useState<any[]>(initialMembers);
@@ -217,6 +221,144 @@ export default function CommunityChatClient({
   };
 
   const isOwner = profile?.id === community?.owner_id;
+
+  const handleAcceptInvite = async () => {
+    setJoiningInvite(true);
+    try {
+      const res = await fetch(`/api/communities/${communityId}/join`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Joined ${community?.name || "community"}!`);
+        setIsMember(true);
+        router.refresh();
+      } else {
+        toast.error(data.error || "Could not join community");
+      }
+    } catch {
+      toast.error("Network error while joining");
+    } finally {
+      setJoiningInvite(false);
+    }
+  };
+
+  if (!isMember) {
+    return (
+      <div
+        style={{
+          background: "var(--ink)",
+          color: "var(--text)",
+          minHeight: "calc(100dvh - 76px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 20,
+        }}
+      >
+        <div
+          style={{
+            ...panelStyle,
+            borderRadius: 20,
+            maxWidth: 440,
+            width: "100%",
+            padding: 28,
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: "50%",
+              background: "rgba(0, 201, 167, 0.12)",
+              border: "1px solid rgba(0, 201, 167, 0.35)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+              color: "#00C9A7",
+            }}
+          >
+            <Users size={26} />
+          </div>
+          <p
+            style={{
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#00C9A7",
+              margin: "0 0 6px 0",
+            }}
+          >
+            Community Invite
+          </p>
+          <h1
+            style={{
+              fontFamily: "inherit",
+              fontSize: "1.4rem",
+              fontWeight: 600,
+              margin: "0 0 8px 0",
+              color: "var(--text)",
+            }}
+          >
+            {community?.name}
+          </h1>
+          <p style={{ fontSize: "0.84rem", color: "var(--muted)", margin: "0 0 14px 0" }}>
+            <MapPin size={13} style={{ display: "inline", verticalAlign: "-2px", color: "#B99A65", marginRight: 4 }} />
+            {community?.destinations?.name || "Destination"} · {members.length}{" "}
+            {members.length === 1 ? "member" : "members"}
+          </p>
+          {community?.description && (
+            <p style={{ fontSize: "0.85rem", color: "var(--soft)", lineHeight: 1.5, margin: "0 0 22px 0" }}>
+              {community.description}
+            </p>
+          )}
+          <div style={{ display: "flex", gap: 10 }}>
+            <Link
+              href="/communities"
+              style={{
+                flex: 1,
+                height: 40,
+                borderRadius: 999,
+                background: "var(--hover)",
+                border: "1px solid var(--line)",
+                color: "var(--soft)",
+                fontSize: "0.86rem",
+                fontWeight: 500,
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Back
+            </Link>
+            <button
+              onClick={handleAcceptInvite}
+              disabled={joiningInvite}
+              style={{
+                flex: 2,
+                height: 40,
+                borderRadius: 999,
+                background: "#fff",
+                border: "none",
+                color: "#0b0f12",
+                fontFamily: "inherit",
+                fontSize: "0.86rem",
+                fontWeight: 600,
+                cursor: joiningInvite ? "not-allowed" : "pointer",
+                opacity: joiningInvite ? 0.65 : 1,
+              }}
+            >
+              {joiningInvite ? "Joining…" : "Join Community"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: "var(--ink)", color: "var(--text)", minHeight: "calc(100dvh - 76px)" }}>

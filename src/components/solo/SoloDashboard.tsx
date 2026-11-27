@@ -15,10 +15,10 @@ interface SoloDashboardProps {
 }
 
 export default function SoloDashboard({ profile }: SoloDashboardProps) {
-  const [coords, setCoords]         = useState<{ lat: number; lng: number } | null>(null);
-  const [gpsError, setGpsError]     = useState("");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsError, setGpsError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [sosOpen, setSosOpen]       = useState(false);
+  const [sosOpen, setSosOpen] = useState(false);
   const [recentPosts, setRecentPosts] = useState<Array<{ id: string; caption: string }>>([]);
   const watchId = useRef<number | null>(null);
 
@@ -61,7 +61,7 @@ export default function SoloDashboard({ profile }: SoloDashboardProps) {
     fetch("/api/posts?limit=5&mine=true")
       .then((r) => r.json())
       .then((d) => { if (Array.isArray(d.posts)) setRecentPosts(d.posts); })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   return (
@@ -117,8 +117,8 @@ export default function SoloDashboard({ profile }: SoloDashboardProps) {
             <h3>🔖 Quick Links</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <a href="/discover" style={{ fontSize: "0.85rem", color: "#a78bfa", textDecoration: "none" }}>→ Discover Places</a>
-              <a href="/scan"     style={{ fontSize: "0.85rem", color: "#a78bfa", textDecoration: "none" }}>→ Scan Monument</a>
-              <a href="/profile"  style={{ fontSize: "0.85rem", color: "#a78bfa", textDecoration: "none" }}>→ My Profile</a>
+              <a href="/scan" style={{ fontSize: "0.85rem", color: "#a78bfa", textDecoration: "none" }}>→ Scan Monument</a>
+              <a href="/profile" style={{ fontSize: "0.85rem", color: "#a78bfa", textDecoration: "none" }}>→ My Profile</a>
             </div>
           </div>
         </motion.aside>

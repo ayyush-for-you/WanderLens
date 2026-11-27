@@ -46,9 +46,9 @@ function buildIcon(name: string, highlighted: boolean) {
 
   return L.divIcon({
     className: "",
-    html: `<div style="background:${bg};color:${textColor};border-radius:999px;padding:4px 8px;font-size:${fontSize};font-weight:700;display:flex;align-items:center;gap:4px;box-shadow:${shadow};border:${border};cursor:pointer;white-space:nowrap;">📍 ${truncated}</div>`,
-    iconSize: [90, 28],
-    iconAnchor: [45, 28],
+    html: `<div style="position:relative;display:inline-flex;align-items:center;gap:4px;width:max-content;max-width:190px;transform:translate(-50%,-100%);background:${bg};color:${textColor};border-radius:999px;padding:4px 10px;font-size:${fontSize};font-weight:700;box-shadow:${shadow};border:${border};cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ${truncated}</div>`,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
   });
 }
 
