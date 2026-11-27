@@ -1,26 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Compass,
   Star,
   MapPin,
-  Filter,
   Sparkles,
   Map as MapIcon,
   List as ListIcon,
   ChevronDown,
-  Info,
-  Clock,
-  Layers,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Destination, PlaceCategory, Profile } from "@/types/database";
 import type { RankedPlaceResult } from "@/lib/recommendations/ranking";
 import dynamic from "next/dynamic";
 import PlaceDetailModal from "./PlaceDetailModal";
+import type { PlaceGeo, DiscoverMapProps } from "./DiscoverMap";
 
-const DiscoverMap = dynamic(() => import("./DiscoverMap"), { ssr: false });
+const DiscoverMap = dynamic<DiscoverMapProps>(() => import("./DiscoverMap"), { ssr: false });
 
 interface DiscoverClientProps {
   initialDestinations: Destination[];
@@ -75,9 +72,6 @@ export default function DiscoverClient({
 }: DiscoverClientProps) {
   const [destinations] = useState<Destination[]>(initialDestinations);
 
-  // ── Read optional ?destination=<name> query param on first mount ──────────
-  // Case-insensitive prefix match: "Delhi" matches "Delhi (National Capital Territory)".
-  // Falls back to initialDestinations[0] if no match is found.
   const [selectedDestinationId, setSelectedDestinationId] = useState<string>(
     () => {
       const defaultId = initialDestinations[0]?.id || "";
@@ -92,7 +86,7 @@ export default function DiscoverClient({
           if (match) return match.id;
         }
       } catch {
-        // ignore – fall through to default
+        // ignore
       }
       return defaultId;
     }
@@ -110,29 +104,28 @@ export default function DiscoverClient({
   // Active detail modal
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
+  // Hovered card → highlights marker
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+
+  // Geo image lookup: id → { image_url, image_credit }
+  const [geoImages, setGeoImages] = useState<Map<string, PlaceGeo>>(new Map());
+
   // User coordinates
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Acquire user location for distance calculations
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        },
-        () => {
-          // Ignore permission rejection
-        },
+        (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {},
         { timeout: 6000 }
       );
     }
   }, []);
 
-  // Fetch recommendations whenever destination, category, sort, or coords change
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     if (!selectedDestinationId) return;
     setLoading(true);
-
     try {
       let url = `/api/destinations/${selectedDestinationId}/recommendations?sort=${sortBy}`;
       if (category !== "all") url += `&category=${category}`;
@@ -151,11 +144,24 @@ export default function DiscoverClient({
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDestinationId, category, sortBy, coords]);
 
   useEffect(() => {
     fetchRecommendations();
-  }, [selectedDestinationId, category, sortBy, coords]);
+  }, [fetchRecommendations]);
+
+  /** Called by DiscoverMap when it finishes loading geo data for the destination */
+  const handleGeoLoaded = useCallback((geoPlaces: PlaceGeo[]) => {
+    const map = new Map<string, PlaceGeo>();
+    geoPlaces.forEach((p) => map.set(p.id, p));
+    setGeoImages(map);
+  }, []);
+
+  /** Called when a marker is clicked — open detail modal & clear hover */
+  const handleMapSelectPlace = useCallback((id: string) => {
+    setHoveredCardId(id);   // highlight the marker
+    setSelectedPlaceId(id); // open modal
+  }, []);
 
   const activeDestination = destinations.find((d) => d.id === selectedDestinationId);
 
@@ -208,15 +214,9 @@ export default function DiscoverClient({
           display: inline-flex;
           align-items: center;
         }
-        .wl-chip:hover {
-          background: var(--hover);
-          color: #fff;
-        }
-        .wl-chip.active {
-          background: #fff;
-          color: #0b0f12;
-          border-color: #fff;
-        }
+        .wl-chip:hover { background: var(--hover); color: #fff; }
+        .wl-chip.active { background: #fff; color: #0b0f12; border-color: #fff; }
+
         .wl-place-card {
           border-radius: 16px;
           background: var(--panel);
@@ -236,6 +236,10 @@ export default function DiscoverClient({
           border-color: rgba(255,255,255,0.18);
           box-shadow: 0 24px 50px -24px rgba(0,0,0,0.7);
         }
+        .wl-place-card.wl-highlighted {
+          border-color: #6C63FF;
+          box-shadow: 0 0 0 2px rgba(108,99,255,0.35), 0 24px 50px -24px rgba(0,0,0,0.7);
+        }
         .wl-place-card-img {
           width: 100%;
           height: 100%;
@@ -247,20 +251,14 @@ export default function DiscoverClient({
           transform: scale(1.05);
         }
         @media (prefers-reduced-motion: reduce) {
-          .wl-card-enter,
-          .wl-skeleton {
-            animation: none !important;
-          }
-          .wl-place-card,
-          .wl-place-card-img {
-            transition: none !important;
-          }
+          .wl-card-enter, .wl-skeleton { animation: none !important; }
+          .wl-place-card, .wl-place-card-img { transition: none !important; }
         }
       `}</style>
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px" }}>
 
-        {/* ── Header & Destination Bar ────────────────────────────── */}
+        {/* ── Header & Destination Bar ── */}
         <div
           style={{
             display: "flex",
@@ -313,7 +311,10 @@ export default function DiscoverClient({
             <div style={{ position: "relative" }}>
               <select
                 value={selectedDestinationId}
-                onChange={(e) => setSelectedDestinationId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedDestinationId(e.target.value);
+                  setGeoImages(new Map()); // clear images for new destination
+                }}
                 style={{ ...selectStyle, colorScheme: "dark", minWidth: 180, paddingRight: 32, fontWeight: 500 }}
                 aria-label="Select Destination"
               >
@@ -336,7 +337,7 @@ export default function DiscoverClient({
               />
             </div>
 
-            {/* View Mode Toggle: List vs Map */}
+            {/* View Mode Toggle */}
             <div
               style={{
                 display: "flex",
@@ -391,7 +392,7 @@ export default function DiscoverClient({
           </div>
         </div>
 
-        {/* ── Category Chips Bar ──────────────────────────────────── */}
+        {/* ── Category Chips Bar ── */}
         <div
           style={{
             display: "flex",
@@ -413,7 +414,7 @@ export default function DiscoverClient({
           ))}
         </div>
 
-        {/* ── Sort & Sub-heading Bar ──────────────────────────────── */}
+        {/* ── Sort & Sub-heading Bar ── */}
         <div
           style={{
             display: "flex",
@@ -434,7 +435,6 @@ export default function DiscoverClient({
             </span>
           </div>
 
-          {/* Sort Select */}
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span
               style={{
@@ -449,7 +449,7 @@ export default function DiscoverClient({
             <div style={{ position: "relative" }}>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                 style={{ ...selectStyle, colorScheme: "dark", height: 36, paddingRight: 28, fontSize: "0.8rem" }}
               >
                 {SORTS.map((s) => (
@@ -473,18 +473,20 @@ export default function DiscoverClient({
           </div>
         </div>
 
-        {/* ── MAP VIEW ───────────────────────────────────────────── */}
-        {viewMode === "map" ? (
+        {/* ── MAP VIEW ── */}
+        {viewMode === "map" && (
           <div className="animate-fade-in" style={{ marginBottom: 24 }}>
             <DiscoverMap
-              places={places}
-              destinationName={activeDestination?.name || "Delhi"}
-              onSelectPlace={(id) => setSelectedPlaceId(id)}
+              destinationId={selectedDestinationId}
+              categoryFilter={category}
+              hoveredPlaceId={hoveredCardId}
+              onSelectPlace={handleMapSelectPlace}
+              onGeoLoaded={handleGeoLoaded}
             />
           </div>
-        ) : null}
+        )}
 
-        {/* ── Places Cards Grid ───────────────────────────────────── */}
+        {/* ── Places Cards Grid ── */}
         {loading ? (
           <div
             style={{
@@ -497,24 +499,22 @@ export default function DiscoverClient({
               <div
                 key={i}
                 className="wl-skeleton"
-                style={{
-                  height: 300,
-                  borderRadius: 16,
-                  border: "1px solid var(--line)",
-                }}
+                style={{ height: 300, borderRadius: 16, border: "1px solid var(--line)" }}
               />
             ))}
           </div>
         ) : places.length === 0 ? (
-          <div
-            style={{
-              ...panelStyle,
-              padding: "56px 24px",
-              textAlign: "center",
-            }}
-          >
+          <div style={{ ...panelStyle, padding: "56px 24px", textAlign: "center" }}>
             <Compass size={36} style={{ color: "var(--muted)", margin: "0 auto 14px" }} />
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 500, color: "var(--text)", marginBottom: 6, fontFamily: "inherit" }}>
+            <h3
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 500,
+                color: "var(--text)",
+                marginBottom: 6,
+                fontFamily: "inherit",
+              }}
+            >
               No places found
             </h3>
             <p
@@ -526,7 +526,8 @@ export default function DiscoverClient({
                 lineHeight: 1.5,
               }}
             >
-              No places in this category currently match the hidden gem criteria. Try selecting &quot;All Gems&quot;.
+              No places in this category currently match the hidden gem criteria. Try selecting
+              &quot;All Gems&quot;.
             </p>
             <button
               onClick={() => setCategory("all")}
@@ -553,138 +554,139 @@ export default function DiscoverClient({
               gap: 16,
             }}
           >
-            {places.map((place, idx) => (
-              <div
-                key={place.id}
-                className="wl-place-card wl-card-enter"
-                style={{ animationDelay: `${Math.min(idx, 7) * 60}ms` }}
-                onClick={() => setSelectedPlaceId(place.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && setSelectedPlaceId(place.id)}
-                aria-label={`View details for ${place.name}`}
-              >
-                {/* ── Image Area (16:10) ── */}
+            {places.map((place, idx) => {
+              const geo = geoImages.get(place.id);
+              const imgUrl = geo?.image_url ?? null;
+              const imgCredit = geo?.image_credit ?? null;
+              const isHighlighted = hoveredCardId === place.id;
+
+              return (
                 <div
-                  style={{
-                    position: "relative",
-                    paddingTop: "62.5%", /* 16:10 */
-                    overflow: "hidden",
-                    flexShrink: 0,
-                  }}
+                  key={place.id}
+                  className={`wl-place-card wl-card-enter${isHighlighted ? " wl-highlighted" : ""}`}
+                  style={{ animationDelay: `${Math.min(idx, 7) * 60}ms` }}
+                  onClick={() => setSelectedPlaceId(place.id)}
+                  onMouseEnter={() => setHoveredCardId(place.id)}
+                  onMouseLeave={() => setHoveredCardId(null)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && setSelectedPlaceId(place.id)}
+                  aria-label={`View details for ${place.name}`}
                 >
+                  {/* ── Image Area (16:10) ── */}
                   <div
+                    style={{
+                      position: "relative",
+                      paddingTop: "62.5%",
+                      overflow: "hidden",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {imgUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={imgUrl}
+                        alt={place.name}
+                        className="wl-place-card-img"
+                        style={{ position: "absolute", inset: 0 }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "linear-gradient(135deg, #16222b, #0b1013)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "var(--muted)",
+                            textTransform: "capitalize",
+                          }}
+                        >
+                          {place.category}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Dark gradient overlay at bottom */}
+                    <div
                       style={{
                         position: "absolute",
                         inset: 0,
-                        background: "linear-gradient(135deg, #16222b, #0b1013)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        background:
+                          "linear-gradient(to top, rgba(8,11,13,0.82) 0%, rgba(8,11,13,0.1) 50%, rgba(8,11,13,0) 100%)",
+                        pointerEvents: "none",
                       }}
-                    >
-                      <span style={{ fontSize: "0.75rem", color: "var(--muted)", textTransform: "capitalize" }}>
-                        {place.category}
-                      </span>
-                    </div>
+                    />
 
-                  {/* Dark gradient overlay at bottom for rating */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background: "linear-gradient(to top, rgba(8,11,13,0.82) 0%, rgba(8,11,13,0.1) 50%, rgba(8,11,13,0) 100%)",
-                      pointerEvents: "none",
-                    }}
-                  />
-
-                  {/* Top badges row */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 10,
-                      left: 10,
-                      right: 10,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    {/* Category tag */}
-                    <span
+                    {/* Top badges row */}
+                    <div
                       style={{
-                        fontSize: "0.68rem",
-                        fontWeight: 500,
-                        textTransform: "capitalize",
-                        color: "rgba(255,255,255,0.85)",
-                        background: "rgba(255,255,255,0.12)",
-                        backdropFilter: "blur(8px)",
-                        WebkitBackdropFilter: "blur(8px)",
-                        borderRadius: 999,
-                        padding: "3px 9px",
-                        letterSpacing: "0.03em",
+                        position: "absolute",
+                        top: 10,
+                        left: 10,
+                        right: 10,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
                       }}
                     >
-                      {place.category}
-                    </span>
-
-                    {/* Hidden gem badge */}
-                    {place.is_hidden_gem && (
                       <span
                         style={{
-                          padding: "3px 9px",
-                          borderRadius: 999,
-                          background: "#fff",
-                          color: "#0b0f12",
                           fontSize: "0.68rem",
                           fontWeight: 500,
+                          textTransform: "capitalize",
+                          color: "rgba(255,255,255,0.85)",
+                          background: "rgba(255,255,255,0.12)",
+                          backdropFilter: "blur(8px)",
+                          WebkitBackdropFilter: "blur(8px)",
+                          borderRadius: 999,
+                          padding: "3px 9px",
                           letterSpacing: "0.03em",
                         }}
                       >
-                        Hidden Gem
+                        {place.category}
                       </span>
-                    )}
-                  </div>
 
-                  {/* Bottom: rating pill + distance */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: 10,
-                      left: 10,
-                      right: 10,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        background: "rgba(0,0,0,0.55)",
-                        backdropFilter: "blur(6px)",
-                        WebkitBackdropFilter: "blur(6px)",
-                        padding: "3px 8px",
-                        borderRadius: 999,
-                      }}
-                    >
-                      <Star size={12} fill="#fff" color="#fff" />
-                      <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#fff" }}>
-                        {place.avg_rating.toFixed(1)}
-                      </span>
-                      <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.6)" }}>
-                        ({place.n_ratings})
-                      </span>
+                      {place.is_hidden_gem && (
+                        <span
+                          style={{
+                            padding: "3px 9px",
+                            borderRadius: 999,
+                            background: "#fff",
+                            color: "#0b0f12",
+                            fontSize: "0.68rem",
+                            fontWeight: 500,
+                            letterSpacing: "0.03em",
+                          }}
+                        >
+                          Hidden Gem
+                        </span>
+                      )}
                     </div>
 
-                    {place.distance_m !== null && (
-                      <span
+                    {/* Bottom: rating pill + distance */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 10,
+                        left: 10,
+                        right: 10,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <div
                         style={{
-                          fontSize: "0.7rem",
-                          fontWeight: 500,
-                          color: "rgba(255,255,255,0.8)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
                           background: "rgba(0,0,0,0.55)",
                           backdropFilter: "blur(6px)",
                           WebkitBackdropFilter: "blur(6px)",
@@ -692,78 +694,120 @@ export default function DiscoverClient({
                           borderRadius: 999,
                         }}
                       >
-                        {(place.distance_m / 1000).toFixed(1)} km
+                        <Star size={12} fill="#fff" color="#fff" />
+                        <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#fff" }}>
+                          {place.avg_rating.toFixed(1)}
+                        </span>
+                        <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.6)" }}>
+                          ({place.n_ratings})
+                        </span>
+                      </div>
+
+                      {place.distance_m !== null && (
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            fontWeight: 500,
+                            color: "rgba(255,255,255,0.8)",
+                            background: "rgba(0,0,0,0.55)",
+                            backdropFilter: "blur(6px)",
+                            WebkitBackdropFilter: "blur(6px)",
+                            padding: "3px 8px",
+                            borderRadius: 999,
+                          }}
+                        >
+                          {(place.distance_m / 1000).toFixed(1)} km
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Photo credit caption (bottom-right, only when image_url exists) */}
+                    {imgUrl && imgCredit && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          bottom: 36,
+                          right: 10,
+                          fontSize: "0.6rem",
+                          color: "rgba(255,255,255,0.5)",
+                          background: "rgba(0,0,0,0.4)",
+                          borderRadius: 4,
+                          padding: "1px 5px",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        Photo: {imgCredit}
                       </span>
                     )}
                   </div>
-                </div>
 
-                {/* ── Card Body ── */}
-                <div
-                  style={{
-                    padding: "14px 16px",
-                    display: "flex",
-                    flexDirection: "column",
-                    flex: 1,
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: "1rem",
-                        fontWeight: 500,
-                        color: "var(--text)",
-                        marginBottom: 4,
-                        lineHeight: 1.3,
-                        fontFamily: "inherit",
-                      }}
-                    >
-                      {place.name}
-                    </h3>
-                    {place.description && (
-                      <p
-                        style={{
-                          fontSize: "0.8125rem",
-                          color: "var(--muted)",
-                          lineHeight: 1.45,
-                          marginBottom: 10,
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {place.description}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* ── Rationale line ── */}
+                  {/* ── Card Body ── */}
                   <div
                     style={{
-                      paddingTop: 8,
-                      borderTop: "1px solid var(--line)",
-                      marginTop: 8,
+                      padding: "14px 16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      flex: 1,
+                      justifyContent: "space-between",
                     }}
                   >
-                    <p
+                    <div>
+                      <h3
+                        style={{
+                          fontSize: "1rem",
+                          fontWeight: 500,
+                          color: "var(--text)",
+                          marginBottom: 4,
+                          lineHeight: 1.3,
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        {place.name}
+                      </h3>
+                      {place.description && (
+                        <p
+                          style={{
+                            fontSize: "0.8125rem",
+                            color: "var(--muted)",
+                            lineHeight: 1.45,
+                            marginBottom: 10,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {place.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Rationale line */}
+                    <div
                       style={{
-                        fontSize: "0.76rem",
-                        color: "var(--muted)",
-                        lineHeight: 1.4,
+                        paddingTop: 8,
+                        borderTop: "1px solid var(--line)",
+                        marginTop: 8,
                       }}
                     >
-                      {place.recommendation_reason}
-                    </p>
+                      <p
+                        style={{
+                          fontSize: "0.76rem",
+                          color: "var(--muted)",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {place.recommendation_reason}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* ── Place Detail & Reviews Modal ────────────────────────── */}
+        {/* ── Place Detail & Reviews Modal ── */}
         {selectedPlaceId && (
           <PlaceDetailModal
             placeId={selectedPlaceId}
@@ -771,7 +815,8 @@ export default function DiscoverClient({
             isOpen={Boolean(selectedPlaceId)}
             onClose={() => {
               setSelectedPlaceId(null);
-              fetchRecommendations(); // Refresh stats in case ratings changed
+              setHoveredCardId(null);
+              fetchRecommendations();
             }}
           />
         )}

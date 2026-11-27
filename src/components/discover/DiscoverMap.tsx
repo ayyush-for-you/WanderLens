@@ -1,142 +1,199 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import type { RankedPlaceResult } from "@/lib/recommendations/ranking";
+import type { PlaceCategory } from "@/types/database";
+import { createClient } from "@/lib/supabase/client";
 
-interface DiscoverMapProps {
-  places: RankedPlaceResult[];
-  destinationName: string;
-  destinationCentre?: string;
-  onSelectPlace: (placeId: string) => void;
+/* ─── Types ──────────────────────────────────────────────────────── */
+
+/** Row returned by the get_places_geo RPC – defined locally, never touches database.ts */
+export interface PlaceGeo {
+  id: string;
+  destination_id: string;
+  name: string;
+  category: PlaceCategory;
+  lat: number;
+  lng: number;
+  avg_rating: number;
+  n_ratings: number;
+  image_url: string | null;
+  image_credit: string | null;
+  image_license: string | null;
 }
 
+export interface DiscoverMapProps {
+  destinationId: string;
+  categoryFilter: PlaceCategory | "all";
+  hoveredPlaceId: string | null;
+  onSelectPlace: (placeId: string) => void;
+  /** Parent calls this so it can build the imageUrl lookup */
+  onGeoLoaded?: (places: PlaceGeo[]) => void;
+}
+
+/* ─── Marker icon helpers ─────────────────────────────────────────── */
+
+function buildIcon(name: string, highlighted: boolean) {
+  const bg = highlighted ? "#ffffff" : "#6C63FF";
+  const textColor = highlighted ? "#0b0f12" : "#ffffff";
+  const shadow = highlighted
+    ? "0 0 0 3px #6C63FF, 0 6px 18px rgba(0,0,0,0.6)"
+    : "0 4px 12px rgba(0,0,0,0.4)";
+  const truncated = name.length > 18 ? name.slice(0, 16) + "\u2026" : name;
+  const fontSize = highlighted ? "12px" : "11px";
+  const border = highlighted ? "2px solid #6C63FF" : "2px solid rgba(255,255,255,0.6)";
+
+  return L.divIcon({
+    className: "",
+    html: `<div style="background:${bg};color:${textColor};border-radius:999px;padding:4px 8px;font-size:${fontSize};font-weight:700;display:flex;align-items:center;gap:4px;box-shadow:${shadow};border:${border};cursor:pointer;white-space:nowrap;">📍 ${truncated}</div>`,
+    iconSize: [90, 28],
+    iconAnchor: [45, 28],
+  });
+}
+
+/* ─── Component ───────────────────────────────────────────────────── */
+
 export default function DiscoverMap({
-  places,
-  destinationName,
+  destinationId,
+  categoryFilter,
+  hoveredPlaceId,
   onSelectPlace,
+  onGeoLoaded,
 }: DiscoverMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef       = useRef<L.Map | null>(null);
-  const markersRef   = useRef<L.Marker[]>([]);
+  const markerMapRef = useRef<Map<string, { marker: L.Marker; place: PlaceGeo }>>(new Map());
+  const allPlacesRef = useRef<PlaceGeo[]>([]);
+  const categoryRef  = useRef(categoryFilter);
+  const hoveredRef   = useRef(hoveredPlaceId);
 
-  // Default coordinate centers
-  let centerLat = 28.6139;
-  let centerLng = 77.2090;
+  // Keep refs in sync for use inside callbacks
+  categoryRef.current = categoryFilter;
+  hoveredRef.current  = hoveredPlaceId;
 
-  if (destinationName.toLowerCase().includes("jaipur")) {
-    centerLat = 26.9124;
-    centerLng = 75.7873;
-  }
+  /** Re-render visible markers honouring the current category filter */
+  const syncMarkers = useCallback(
+    (places: PlaceGeo[], filter: PlaceCategory | "all", highlightId: string | null) => {
+      const map = mapRef.current;
+      if (!map) return;
 
-  // Parse points for places
-  const placeMarkers = places
-    .map((p) => {
-      let lat: number | null = null;
-      let lng: number | null = null;
-      if (p.location && typeof p.location === "string" && p.location.includes("POINT")) {
-        const parts = p.location.replace("POINT(", "").replace(")", "").trim().split(" ");
-        lng = parseFloat(parts[0]);
-        lat = parseFloat(parts[1]);
+      // Clear all existing markers
+      markerMapRef.current.forEach(({ marker }) => marker.remove());
+      markerMapRef.current.clear();
+
+      const visible = filter === "all" ? places : places.filter((p) => p.category === filter);
+
+      visible.forEach((p) => {
+        const isHighlighted = p.id === highlightId;
+        const marker = L.marker([p.lat, p.lng], {
+          icon: buildIcon(p.name, isHighlighted),
+          zIndexOffset: isHighlighted ? 1000 : 0,
+        })
+          .addTo(map)
+          .on("click", () => {
+            onSelectPlace(p.id);
+            map.panTo([p.lat, p.lng], { animate: true });
+          });
+
+        marker.bindTooltip(
+          `<strong>${p.name}</strong><br/>★ ${p.avg_rating.toFixed(1)} (${p.n_ratings})`,
+          { sticky: true, offset: [0, -10] }
+        );
+
+        markerMapRef.current.set(p.id, { marker, place: p });
+      });
+
+      // Fit bounds
+      if (visible.length > 1) {
+        const group = L.featureGroup(
+          Array.from(markerMapRef.current.values()).map((v) => v.marker)
+        );
+        map.fitBounds(group.getBounds().pad(0.18));
+      } else if (visible.length === 1) {
+        const { place } = Array.from(markerMapRef.current.values())[0];
+        map.setView([place.lat, place.lng], 15, { animate: true });
       }
-      return { ...p, lat, lng };
-    })
-    .filter((p): p is typeof p & { lat: number; lng: number } => p.lat !== null && p.lng !== null);
+    },
+    [onSelectPlace]
+  );
 
+  /* ── Initialise Leaflet map (once) ── */
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     const map = L.map(containerRef.current, {
-      center: [centerLat, centerLng],
-      zoom: 12,
+      center: [20.5937, 78.9629], // India centre while geo loads
+      zoom: 5,
       zoomControl: true,
     });
 
-    // OpenStreetMap Tile Layer with dark styling
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; OpenStreetMap contributors',
+      attribution: "\u00a9 OpenStreetMap contributors",
       maxZoom: 19,
     }).addTo(map);
 
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 250);
-
+    setTimeout(() => map.invalidateSize(), 250);
     const onResize = () => map.invalidateSize();
     window.addEventListener("resize", onResize);
-
     mapRef.current = map;
 
     return () => {
       window.removeEventListener("resize", onResize);
       map.remove();
       mapRef.current = null;
+      markerMapRef.current.clear();
     };
-  }, [centerLat, centerLng]);
+  }, []); // runs once
 
-  // Update place markers on map
+  /* ── Fetch geo when destinationId changes ── */
   useEffect(() => {
-    if (!mapRef.current) return;
-    const map = mapRef.current;
+    if (!destinationId) return;
+    let cancelled = false;
 
-    // Clear existing
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
-
-    placeMarkers.forEach((p) => {
-      const isGem = p.is_hidden_gem;
-      const customIcon = L.divIcon({
-        className: "",
-        html: `
-          <div style="
-            background: ${isGem ? "#e8a838" : "#6C63FF"};
-            color: ${isGem ? "#1a0800" : "#ffffff"};
-            border-radius: 999px;
-            padding: 4px 8px;
-            font-size: 11px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            border: 2px solid #ffffff;
-            cursor: pointer;
-            white-space: nowrap;
-          ">
-            <span>${isGem ? "💎" : "📍"}</span>
-            <span>${p.name}</span>
-          </div>
-        `,
-        iconSize: [80, 26],
-        iconAnchor: [40, 13],
+    const supabase = createClient();
+    supabase
+      .rpc("get_places_geo", { p_destination_id: destinationId })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error("[DiscoverMap] get_places_geo error:", error.message);
+          return;
+        }
+        const places = (data as PlaceGeo[]) ?? [];
+        allPlacesRef.current = places;
+        onGeoLoaded?.(places);
+        syncMarkers(places, categoryRef.current, hoveredRef.current);
       });
 
-      const marker = L.marker([p.lat, p.lng], { icon: customIcon })
-        .addTo(map)
-        .on("click", () => onSelectPlace(p.id));
+    return () => { cancelled = true; };
+    // Intentionally not listing categoryFilter / hoveredPlaceId — their effects handle updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destinationId, syncMarkers]);
 
-      marker.bindPopup(`
-        <div style="font-family: sans-serif; padding: 4px;">
-          <h4 style="font-weight: 700; margin: 0 0 4px 0;">${p.name}</h4>
-          <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">Category: ${p.category}</p>
-          <p style="margin: 0; font-size: 12px; color: #f59e0b; font-weight: 600;">★ ${p.avg_rating.toFixed(1)} (${p.n_ratings} ratings)</p>
-        </div>
-      `);
+  /* ── Re-draw markers when filter changes ── */
+  useEffect(() => {
+    if (!mapRef.current || allPlacesRef.current.length === 0) return;
+    syncMarkers(allPlacesRef.current, categoryFilter, hoveredPlaceId);
+  }, [categoryFilter, syncMarkers, hoveredPlaceId]);
 
-      markersRef.current.push(marker);
+  /* ── Highlight marker on hover without full redraw ── */
+  useEffect(() => {
+    if (!mapRef.current) return;
+    markerMapRef.current.forEach(({ marker, place }) => {
+      const isHighlighted = place.id === hoveredPlaceId;
+      marker.setIcon(buildIcon(place.name, isHighlighted));
+      marker.setZIndexOffset(isHighlighted ? 1000 : 0);
     });
-
-    if (placeMarkers.length > 0) {
-      const group = L.featureGroup(markersRef.current);
-      map.fitBounds(group.getBounds().pad(0.15));
+    if (hoveredPlaceId) {
+      const entry = markerMapRef.current.get(hoveredPlaceId);
+      if (entry) {
+        mapRef.current.panTo([entry.place.lat, entry.place.lng], { animate: true });
+      }
     }
-  }, [places]);
+  }, [hoveredPlaceId]);
 
   return (
-    /* ── Map container: forms its own stacking context so the map tiles
-       never bleed above overlays rendered outside this element.
-       clamp height: 360 px min, 60 vh preferred, 640 px max. ────────── */
     <div
       className="card"
       style={{
@@ -155,54 +212,6 @@ export default function DiscoverMap({
         className="wl-dark-map"
         style={{ width: "100%", height: "100%" }}
       />
-
-      {/* Place Pins Overlay Bar */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 12,
-          left: 12,
-          right: 12,
-          display: "flex",
-          gap: 8,
-          overflowX: "auto",
-          paddingBottom: 4,
-          zIndex: 500,
-        }}
-      >
-        {placeMarkers.slice(0, 10).map((p) => (
-          <button
-            key={p.id}
-            onClick={() => {
-              onSelectPlace(p.id);
-              if (mapRef.current && p.lat && p.lng) {
-                mapRef.current.flyTo([p.lat, p.lng], 15, { duration: 0.8 });
-              }
-            }}
-            style={{
-              padding: "8px 14px",
-              borderRadius: 10,
-              background: p.is_hidden_gem ? "linear-gradient(135deg, #e8a838, #f59e0b)" : "rgba(34,31,74,0.95)",
-              color: p.is_hidden_gem ? "#1a0800" : "#ffffff",
-              border: p.is_hidden_gem ? "none" : "1px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              fontSize: "0.82rem",
-              fontWeight: 700,
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            <span>{p.is_hidden_gem ? "💎" : "📍"}</span>
-            <span>{p.name}</span>
-            <span style={{ opacity: 0.85, fontSize: "0.75rem" }}>★ {p.avg_rating.toFixed(1)}</span>
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
