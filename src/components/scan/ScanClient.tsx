@@ -47,6 +47,8 @@ interface ScanResult {
   historical_image: MonumentImage | null;
   candidates: MatchCandidate[];
   scan_id: string | null;
+  ai_reason?: string;
+  needs_api_key?: boolean;
 }
 
 /* ─── Shared style tokens ─────────────────────────────────────────── */
@@ -187,7 +189,7 @@ export default function ScanClient({ profile }: ScanClientProps) {
     if (!videoRef.current) return;
     if (stream) {
       videoRef.current.srcObject = stream;
-      videoRef.current.play().catch(() => {/* autoPlay + playsInline handles iOS/Safari */});
+      videoRef.current.play().catch(() => {/* autoPlay + playsInline handles iOS/Safari */ });
     } else {
       videoRef.current.srcObject = null;
     }
@@ -885,8 +887,8 @@ export default function ScanClient({ profile }: ScanClientProps) {
                     {coords
                       ? `Active (${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}) +5km boost`
                       : gpsLoading
-                      ? "Acquiring GPS location…"
-                      : "Boosts score for monuments within 5km"}
+                        ? "Acquiring GPS location…"
+                        : "Boosts score for monuments within 5km"}
                   </p>
                 </div>
               </div>
@@ -1171,10 +1173,13 @@ export default function ScanClient({ profile }: ScanClientProps) {
                 >
                   <AlertCircle size={18} style={{ flexShrink: 0, color: "#B99A65", marginTop: 1 }} />
                   <div>
-                    <p style={{ fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>Not sure — pick from candidates</p>
+                    <p style={{ fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
+                      {scanResult.status === "no_match" ? "Monument not recognized" : "Not sure — pick from candidates"}
+                    </p>
                     <p style={{ fontSize: "0.8125rem", color: "var(--muted)" }}>
-                      The scan confidence was below our {Math.round(scanResult.confidence_threshold * 100)}% threshold.
-                      Select the correct monument below or search manually.
+                      {scanResult.ai_reason
+                        ? scanResult.ai_reason
+                        : `The scan confidence was below our ${Math.round(scanResult.confidence_threshold * 100)}% threshold. Select the correct monument below or search manually.`}
                     </p>
                   </div>
                 </div>

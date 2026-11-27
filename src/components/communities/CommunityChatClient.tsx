@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   MapPin,
   Sparkles,
+  Share2,
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -324,6 +325,32 @@ export default function CommunityChatClient({
             )}
 
             <button
+              onClick={() => {
+                navigator.clipboard?.writeText(`${window.location.origin}/communities/${communityId}`);
+                toast.success("Community invite link copied!");
+              }}
+              aria-label="Share invite link"
+              style={{
+                height: 34,
+                padding: "0 12px",
+                borderRadius: 999,
+                background: "var(--hover)",
+                border: "1px solid var(--line)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                color: "var(--soft)",
+                fontSize: "0.78rem",
+                fontWeight: 500,
+                fontFamily: "inherit",
+                cursor: "pointer",
+              }}
+              title="Copy Invite Link"
+            >
+              <Share2 size={13} /> Invite
+            </button>
+
+            <button
               onClick={() => setMembersDrawerOpen(true)}
               aria-label="View members"
               style={{
@@ -618,6 +645,32 @@ export default function CommunityChatClient({
                 <X size={16} />
               </button>
             </div>
+
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText(`${window.location.origin}/communities/${communityId}`);
+                toast.success("Community invite link copied!");
+              }}
+              style={{
+                width: "100%",
+                height: 36,
+                borderRadius: 999,
+                background: "rgba(0, 201, 167, 0.12)",
+                border: "1px solid rgba(0, 201, 167, 0.35)",
+                color: "#00C9A7",
+                fontSize: "0.8rem",
+                fontWeight: 500,
+                fontFamily: "inherit",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                marginBottom: 14,
+              }}
+            >
+              <Share2 size={13} /> Copy Invite Link
+            </button>
 
             <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
               {members.map((m) => (

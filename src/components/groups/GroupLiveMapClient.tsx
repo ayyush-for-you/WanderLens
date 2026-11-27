@@ -18,6 +18,8 @@ import {
   Bell,
   AlertOctagon,
   Compass,
+  Share2,
+  UserPlus,
 } from "lucide-react";
 import { GROUP_LOCATION_UPDATE_INTERVAL_SECONDS } from "@/config/constants";
 import type { GroupMapMember } from "./GroupMap";
@@ -85,6 +87,12 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
   const [sendingAlert, setSendingAlert] = useState(false);
   const [lastBroadcast, setLastBroadcast] = useState<Date | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<GroupMapMember | null>(null);
+  const [sosOpen, setSosOpen] = useState(false);
+  const [myCoords, setMyCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [inviteFeedback, setInviteFeedback] = useState<{ ok: boolean; text: string } | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const watchIdRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
@@ -518,6 +526,32 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
             )}
           </span>
 
+          <button
+            onClick={() => {
+              navigator.clipboard?.writeText(window.location.href);
+              setLinkCopied(true);
+              setTimeout(() => setLinkCopied(false), 2000);
+            }}
+            style={{
+              height: 32,
+              padding: "0 12px",
+              borderRadius: 999,
+              background: "var(--hover)",
+              border: "1px solid var(--line)",
+              color: linkCopied ? "#00C9A7" : "var(--soft)",
+              fontSize: "0.78rem",
+              fontWeight: 500,
+              fontFamily: "inherit",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <Share2 size={13} />
+            {linkCopied ? "Copied!" : "Share Link"}
+          </button>
+
           {group.is_owner ? (
             <button
               onClick={handleEndTrip}
@@ -621,10 +655,10 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
                   {sharingOn
                     ? lastBroadcast
                       ? `Synced ${lastBroadcast.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        })} (10s)`
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })} (10s)`
                       : "Syncing every 10s…"
                     : "You are invisible to group members"}
                 </div>
@@ -765,6 +799,94 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
                 })}
               </div>
             )}
+
+            {/* Invite Member Form */}
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!inviteQuery.trim() || inviting) return;
+                setInviting(true);
+                setInviteFeedback(null);
+                try {
+                  const res = await fetch(`/api/groups/${groupId}/invite`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: inviteQuery.trim() }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) {
+                    setInviteFeedback({ ok: false, text: data.error || "Failed to invite" });
+                  } else {
+                    setInviteFeedback({
+                      ok: true,
+                      text: `Invited ${data.invited?.display_name || inviteQuery.trim()}`,
+                    });
+                    setInviteQuery("");
+                    fetchGroup();
+                  }
+                } catch {
+                  setInviteFeedback({ ok: false, text: "Network error sending invite" });
+                } finally {
+                  setInviting(false);
+                }
+              }}
+              style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}
+            >
+              <div style={{ display: "flex", gap: 6 }}>
+                <input
+                  type="text"
+                  placeholder="Invite by name or email…"
+                  value={inviteQuery}
+                  onChange={(e) => setInviteQuery(e.target.value)}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 999,
+                    color: "var(--text)",
+                    padding: "7px 12px",
+                    fontSize: "0.78rem",
+                    fontFamily: "inherit",
+                    outline: "none",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={inviting || !inviteQuery.trim()}
+                  style={{
+                    height: 32,
+                    padding: "0 12px",
+                    borderRadius: 999,
+                    background: "#fff",
+                    color: "#0b0f12",
+                    border: "none",
+                    fontSize: "0.76rem",
+                    fontWeight: 600,
+                    fontFamily: "inherit",
+                    cursor: inviting || !inviteQuery.trim() ? "not-allowed" : "pointer",
+                    opacity: inviting || !inviteQuery.trim() ? 0.5 : 1,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    flexShrink: 0,
+                  }}
+                >
+                  <UserPlus size={12} /> {inviting ? "…" : "Invite"}
+                </button>
+              </div>
+              {inviteFeedback && (
+                <p
+                  style={{
+                    fontSize: "0.74rem",
+                    margin: "6px 0 0",
+                    color: inviteFeedback.ok ? "#00C9A7" : "#fca5a5",
+                  }}
+                >
+                  {inviteFeedback.text}
+                </p>
+              )}
+            </form>
           </div>
 
           {/* 3. Group Safety Alerts */}
@@ -912,8 +1034,8 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
                       {a.type === "need_help"
                         ? "Sent a NEED HELP alert!"
                         : a.type === "regroup"
-                        ? "Requested everyone regroup"
-                        : a.body}
+                          ? "Requested everyone regroup"
+                          : a.body}
                     </div>
                   </div>
                 ))}
@@ -983,8 +1105,8 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
                       {m.sharing_on
                         ? "Sharing Live"
                         : m.status === "invited"
-                        ? "Invited"
-                        : "Paused"}
+                          ? "Invited"
+                          : "Paused"}
                     </div>
                   </div>
                 </div>

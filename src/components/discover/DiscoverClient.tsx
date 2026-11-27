@@ -70,7 +70,10 @@ export default function DiscoverClient({
   initialDestinations,
   profile,
 }: DiscoverClientProps) {
-  const [destinations] = useState<Destination[]>(initialDestinations);
+  const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
+  const [showOtherDest, setShowOtherDest] = useState(false);
+  const [customDestName, setCustomDestName] = useState("");
+  const [savingCustomDest, setSavingCustomDest] = useState(false);
 
   const [selectedDestinationId, setSelectedDestinationId] = useState<string>(
     () => {
@@ -307,11 +310,16 @@ export default function DiscoverClient({
           </div>
 
           {/* Destination Dropdown + View Mode Toggle */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <div style={{ position: "relative" }}>
               <select
-                value={selectedDestinationId}
+                value={showOtherDest ? "__other__" : selectedDestinationId}
                 onChange={(e) => {
+                  if (e.target.value === "__other__") {
+                    setShowOtherDest(true);
+                    return;
+                  }
+                  setShowOtherDest(false);
                   setSelectedDestinationId(e.target.value);
                   setGeoImages(new Map()); // clear images for new destination
                 }}
@@ -323,6 +331,7 @@ export default function DiscoverClient({
                     {d.name} ({d.region})
                   </option>
                 ))}
+                <option value="__other__">Other (Enter custom place…)</option>
               </select>
               <ChevronDown
                 size={14}
@@ -336,6 +345,81 @@ export default function DiscoverClient({
                 }}
               />
             </div>
+
+            {showOtherDest && (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!customDestName.trim() || savingCustomDest) return;
+                  setSavingCustomDest(true);
+                  try {
+                    const res = await fetch("/api/destinations", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: customDestName.trim() }),
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.destination) {
+                      setDestinations((prev) =>
+                        prev.some((d) => d.id === data.destination.id)
+                          ? prev
+                          : [...prev, data.destination]
+                      );
+                      setSelectedDestinationId(data.destination.id);
+                      setShowOtherDest(false);
+                      setCustomDestName("");
+                      setGeoImages(new Map());
+                      toast.success(`Switched to ${data.destination.name}`);
+                    } else {
+                      toast.error(data.error || "Sign in to add a custom place");
+                    }
+                  } catch {
+                    toast.error("Failed to add custom place");
+                  } finally {
+                    setSavingCustomDest(false);
+                  }
+                }}
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+              >
+                <input
+                  type="text"
+                  placeholder="Enter place (e.g. Manali)…"
+                  value={customDestName}
+                  onChange={(e) => setCustomDestName(e.target.value)}
+                  maxLength={80}
+                  style={{
+                    height: 40,
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 10,
+                    color: "var(--text)",
+                    padding: "0 12px",
+                    fontSize: "0.84rem",
+                    fontFamily: "inherit",
+                    outline: "none",
+                    width: 180,
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={savingCustomDest || !customDestName.trim()}
+                  style={{
+                    height: 40,
+                    padding: "0 14px",
+                    borderRadius: 10,
+                    background: "#fff",
+                    color: "#0b0f12",
+                    border: "none",
+                    fontSize: "0.82rem",
+                    fontWeight: 500,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                  }}
+                >
+                  {savingCustomDest ? "…" : "Go"}
+                </button>
+              </form>
+            )}
 
             {/* View Mode Toggle */}
             <div

@@ -10,6 +10,7 @@ import {
   MapPin,
   ArrowRight,
   Compass,
+  Share2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Destination, Profile } from "@/types/database";
@@ -622,6 +623,30 @@ export default function CommunitiesClient({
                     </span>
                   </div>
 
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard?.writeText(`${window.location.origin}/communities/${c.id}`);
+                        toast.success("Community invite link copied!");
+                      }}
+                      aria-label="Copy invite link"
+                      title="Copy invite link"
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: "50%",
+                        background: "var(--hover)",
+                        border: "1px solid var(--line)",
+                        color: "var(--soft)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Share2 size={13} />
+                    </button>
+
                   {c.is_member ? (
                     <Link
                       href={`/communities/${c.id}`}
@@ -674,6 +699,7 @@ export default function CommunitiesClient({
                       )}
                     </button>
                   )}
+                  </div>
                 </div>
               </div>
             ))}

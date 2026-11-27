@@ -47,6 +47,7 @@ export default function CreateGroupModal({
   const [destinationId, setDestinationId] = useState(
     initialDestinationId || initialDestinations[0]?.id || ""
   );
+  const [customDestination, setCustomDestination] = useState("");
   const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
   const [destinationsLoading, setDestinationsLoading] = useState(false);
   const [destinationsError, setDestinationsError] = useState<string | null>(null);
@@ -141,12 +142,33 @@ export default function CreateGroupModal({
     setError(null);
 
     try {
+      let resolvedDestinationId = destinationId;
+      if (destinationId === "__other__") {
+        if (!customDestination.trim()) {
+          setError("Please enter a custom place name");
+          setLoading(false);
+          return;
+        }
+        const destRes = await fetch("/api/destinations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: customDestination.trim() }),
+        });
+        const destData = await destRes.json();
+        if (!destRes.ok || !destData.destination?.id) {
+          setError(destData.error || "Failed to save custom destination");
+          setLoading(false);
+          return;
+        }
+        resolvedDestinationId = destData.destination.id;
+      }
+
       const res = await fetch("/api/groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          destination_id: destinationId,
+          destination_id: resolvedDestinationId,
           starts_at: startObj.toISOString(),
           ends_at: endObj.toISOString(),
           community_id: initialCommunityId || null,
@@ -322,7 +344,19 @@ export default function CreateGroupModal({
                   {d.name} ({d.region})
                 </option>
               ))}
+              <option value="__other__">Other (Enter custom place…)</option>
             </select>
+            {destinationId === "__other__" && (
+              <input
+                type="text"
+                placeholder="Enter place or city name (e.g. Manali, Hampi, Kyoto)"
+                value={customDestination}
+                onChange={(e) => setCustomDestination(e.target.value)}
+                maxLength={80}
+                required
+                style={{ ...inputStyle, marginTop: 8 }}
+              />
+            )}
             {destinationsError ? (
               <p style={{ fontSize: "0.75rem", color: "#fca5a5", margin: "6px 0 0" }}>
                 {destinationsError}

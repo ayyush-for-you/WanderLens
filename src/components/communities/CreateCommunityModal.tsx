@@ -47,6 +47,7 @@ export default function CreateCommunityModal({
   const [destinationId, setDestinationId] = useState(
     defaultDestinationId || destinations[0]?.id || ""
   );
+  const [customDestination, setCustomDestination] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -84,12 +85,31 @@ export default function CreateCommunityModal({
     setIsSubmitting(true);
 
     try {
+      let resolvedDestinationId = destinationId;
+      if (destinationId === "__other__") {
+        if (!customDestination.trim()) {
+          toast.error("Please enter a custom place name");
+          setIsSubmitting(false);
+          return;
+        }
+        const destRes = await fetch("/api/destinations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: customDestination.trim() }),
+        });
+        const destData = await destRes.json();
+        if (!destRes.ok || !destData.destination?.id) {
+          throw new Error(destData.error || "Failed to save custom destination");
+        }
+        resolvedDestinationId = destData.destination.id;
+      }
+
       const res = await fetch("/api/communities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          destination_id: destinationId,
+          destination_id: resolvedDestinationId,
           description: description.trim(),
         }),
       });
@@ -264,7 +284,19 @@ export default function CreateCommunityModal({
                   {d.name} ({d.region})
                 </option>
               ))}
+              <option value="__other__">Other (Enter custom place…)</option>
             </select>
+            {destinationId === "__other__" && (
+              <input
+                type="text"
+                placeholder="Enter place or city name (e.g. Manali, Hampi, Kyoto)"
+                value={customDestination}
+                onChange={(e) => setCustomDestination(e.target.value)}
+                maxLength={80}
+                required
+                style={{ ...inputStyle, marginTop: 8 }}
+              />
+            )}
           </div>
 
           <div>
