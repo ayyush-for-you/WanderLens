@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Users,
   MapPin,
   Calendar,
   Clock,
@@ -12,10 +11,11 @@ import {
   Check,
   X,
   AlertCircle,
-  Shield,
   ArrowRight,
-  Sparkles,
+  Compass,
+  Users,
 } from "lucide-react";
+import type { Destination } from "@/types/database";
 import CreateGroupModal from "./CreateGroupModal";
 
 interface GroupItem {
@@ -33,7 +33,38 @@ interface GroupItem {
   profiles?: { id: string; display_name: string; avatar_url: string | null };
 }
 
-export default function GroupsClient() {
+interface GroupsClientProps {
+  initialDestinations?: Destination[];
+}
+
+/* ─── Shared Design-System Tokens ─────────────────────────────────── */
+const panelStyle: React.CSSProperties = {
+  background: "var(--panel)",
+  border: "1px solid var(--line)",
+  borderRadius: 16,
+  backdropFilter: "blur(22px) saturate(140%)",
+  WebkitBackdropFilter: "blur(22px) saturate(140%)",
+};
+
+const emptyCardStyle: React.CSSProperties = {
+  background: "rgba(255, 255, 255, 0.02)",
+  border: "1px dashed var(--line)",
+  borderRadius: 14,
+  padding: "28px 24px",
+  textAlign: "center",
+};
+
+const sectionHeadingStyle: React.CSSProperties = {
+  fontFamily: "inherit",
+  fontSize: "0.8125rem",
+  fontWeight: 600,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--muted)",
+  margin: 0,
+};
+
+export default function GroupsClient({ initialDestinations = [] }: GroupsClientProps) {
   const [groups, setGroups] = useState<GroupItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +74,7 @@ export default function GroupsClient() {
   const fetchGroups = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await fetch("/api/groups");
       const data = await res.json();
       if (!res.ok) {
@@ -88,350 +120,583 @@ export default function GroupsClient() {
   );
 
   return (
-    <div className="container" style={{ paddingBottom: 80, maxWidth: 900 }}>
-      {/* Header */}
+    <div
+      style={{
+        minHeight: "calc(100dvh - 76px)",
+        background: "var(--ink)",
+        color: "var(--text)",
+      }}
+    >
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginTop: 24,
-          marginBottom: 24,
-          flexWrap: "wrap",
-          gap: 16,
+          maxWidth: 1040,
+          margin: "0 auto",
+          padding: "36px clamp(20px, 3.4vw, 48px) 96px",
         }}
       >
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        {/* Header Bar */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            marginBottom: 32,
+            paddingBottom: 24,
+            borderBottom: "1px solid var(--line)",
+            flexWrap: "wrap",
+            gap: 16,
+          }}
+        >
+          <div>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: "0.7rem",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "#00C9A7",
+                background: "rgba(0, 201, 167, 0.1)",
+                border: "1px solid rgba(0, 201, 167, 0.3)",
+                borderRadius: 999,
+                padding: "4px 12px",
+                marginBottom: 10,
+              }}
+            >
+              <Users size={12} />
+              Group Travel Radar
+            </span>
             <h1
-              className="font-display"
-              style={{ fontSize: "1.75rem", fontWeight: 700, margin: 0, color: "var(--text-primary)" }}
+              style={{
+                fontFamily: "inherit",
+                fontSize: "clamp(1.6rem, 3.2vw, 2.1rem)",
+                fontWeight: 500,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
+                margin: "0 0 6px 0",
+                color: "var(--text)",
+              }}
             >
               Travel Groups
             </h1>
-            <span
+            <p style={{ fontSize: "0.9375rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
+              Synchronized live location sharing and instant safety alerts during active trip windows.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <Link
+              href="/solo"
               style={{
-                fontSize: "0.75rem",
-                padding: "2px 8px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                height: 38,
+                padding: "0 16px",
                 borderRadius: 999,
-                background: "rgba(232, 168, 56, 0.15)",
-                color: "var(--accent-gold)",
-                fontWeight: 600,
-                border: "1px solid rgba(232, 168, 56, 0.3)",
+                background: "var(--hover)",
+                border: "1px solid var(--line)",
+                color: "var(--soft)",
+                fontSize: "0.84rem",
+                fontWeight: 500,
+                textDecoration: "none",
+                transition: "background 0.25s var(--ease), color 0.25s var(--ease)",
               }}
             >
-              Feature 1A
-            </span>
-          </div>
-          <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: 0 }}>
-            Real-time live location radar and safety alerts during active trips.
-          </p>
-        </div>
+              <Compass size={15} style={{ color: "#B99A65" }} />
+              Solo Mode
+            </Link>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="btn-primary"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "10px 18px",
-            fontSize: "0.9rem",
-          }}
-        >
-          <Plus size={18} />
-          Create Travel Group
-        </button>
-      </div>
-
-      {/* Pending Invitations Banner */}
-      {pendingInvites.length > 0 && (
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--accent-gold)" }}>
-              Pending Invitations ({pendingInvites.length})
-            </span>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {pendingInvites.map((group) => (
-              <div
-                key={group.id}
-                className="card"
-                style={{
-                  background: "rgba(232, 168, 56, 0.05)",
-                  border: "1px solid rgba(232, 168, 56, 0.25)",
-                  padding: 16,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <h3 style={{ fontSize: "1.05rem", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
-                    {group.name}
-                  </h3>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      marginTop: 4,
-                      fontSize: "0.82rem",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <MapPin size={14} /> {group.destinations?.name || "Destination"}
-                    </span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <Clock size={14} /> {new Date(group.starts_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    onClick={() => handleRespond(group.id, "decline")}
-                    disabled={actionLoading === group.id}
-                    className="btn-secondary"
-                    style={{
-                      padding: "8px 14px",
-                      fontSize: "0.82rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <X size={15} /> Decline
-                  </button>
-                  <button
-                    onClick={() => handleRespond(group.id, "accept")}
-                    disabled={actionLoading === group.id}
-                    className="btn-primary"
-                    style={{
-                      padding: "8px 16px",
-                      fontSize: "0.82rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <Check size={15} /> Accept Invitation
-                  </button>
-                </div>
-              </div>
-            ))}
+            <button
+              onClick={() => setIsModalOpen(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                height: 38,
+                padding: "0 18px",
+                borderRadius: 999,
+                background: "#fff",
+                color: "#0b0f12",
+                border: "none",
+                fontFamily: "inherit",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                cursor: "pointer",
+                transition: "background 0.25s var(--ease), transform 0.25s var(--ease)",
+              }}
+            >
+              <Plus size={16} />
+              Create Travel Group
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Active Live Trips (Top Priority) */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-          <Radio size={18} color="#10b981" className="animate-pulse" />
-          <h2 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, color: "var(--text-primary)" }}>
-            Live Active Trips
-          </h2>
-        </div>
-
-        {activeGroups.length === 0 ? (
+        {/* Error Banner */}
+        {error && (
           <div
-            className="card"
             style={{
-              padding: 24,
-              textAlign: "center",
-              background: "#1c1917",
-              border: "1px dashed var(--border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "12px 16px",
+              borderRadius: 12,
+              background: "rgba(220, 38, 38, 0.1)",
+              border: "1px solid rgba(220, 38, 38, 0.3)",
+              color: "#fca5a5",
+              fontSize: "0.875rem",
+              marginBottom: 24,
             }}
           >
-            <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.9rem" }}>
-              No trips currently active. Groups become live during their scheduled trip window.
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-            {activeGroups.map((group) => (
-              <Link
-                key={group.id}
-                href={`/groups/${group.id}`}
-                style={{ textDecoration: "none" }}
-              >
-                <div
-                  className="card"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(28, 25, 23, 0.9) 100%)",
-                    border: "1px solid rgba(16, 185, 129, 0.35)",
-                    padding: 20,
-                    cursor: "pointer",
-                    position: "relative",
-                    transition: "transform 0.15s, border-color 0.15s",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      color: "#34d399",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        background: "#10b981",
-                        display: "inline-block",
-                      }}
-                    />
-                    LIVE RADAR ACTIVE
-                  </div>
-
-                  <h3 style={{ fontSize: "1.2rem", fontWeight: 700, margin: "0 0 8px 0", color: "var(--text-primary)" }}>
-                    {group.name}
-                  </h3>
-
-                  <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: 16 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                      <MapPin size={15} color="var(--accent-gold)" />
-                      {group.destinations?.name || "Destination"}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <Clock size={15} />
-                      Ends {new Date(group.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      borderTop: "1px solid rgba(255,255,255,0.08)",
-                      paddingTop: 12,
-                    }}
-                  >
-                    <span style={{ fontSize: "0.8rem", color: group.sharing_on ? "#34d399" : "var(--text-muted)" }}>
-                      {group.sharing_on ? "📍 Location Sharing On" : "⏸️ Location Paused"}
-                    </span>
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        fontSize: "0.85rem",
-                        color: "var(--accent-gold)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Open Live Map <ArrowRight size={16} />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+            <button
+              onClick={fetchGroups}
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid var(--line)",
+                borderRadius: 999,
+                color: "var(--text)",
+                padding: "4px 12px",
+                fontSize: "0.78rem",
+                cursor: "pointer",
+              }}
+            >
+              Retry
+            </button>
           </div>
         )}
-      </div>
 
-      {/* Other Trips (Scheduled / Past) */}
-      <div>
-        <h2 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: 14, color: "var(--text-primary)" }}>
-          Scheduled & Past Trips
-        </h2>
-
-        {otherGroups.length === 0 ? (
+        {/* Loading State */}
+        {loading ? (
           <div
-            className="card"
             style={{
-              padding: 24,
+              ...panelStyle,
+              padding: "56px 24px",
               textAlign: "center",
-              background: "#1c1917",
-              border: "1px dashed var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
             }}
           >
-            <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.9rem" }}>
-              No other travel groups yet. Create one above to plan your next heritage exploration!
-            </p>
+            <div
+              className="animate-spin"
+              style={{
+                width: 28,
+                height: 28,
+                border: "2px solid rgba(0, 201, 167, 0.2)",
+                borderTopColor: "#00C9A7",
+                borderRadius: "50%",
+              }}
+            />
+            <span style={{ fontSize: "0.875rem", color: "var(--muted)" }}>
+              Loading your travel groups…
+            </span>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-            {otherGroups.map((group) => {
-              const isPast = new Date(group.ends_at) < new Date() || group.status === "ended";
-              return (
-                <Link
-                  key={group.id}
-                  href={`/groups/${group.id}`}
-                  style={{ textDecoration: "none" }}
-                >
-                  <div
-                    className="card"
-                    style={{
-                      background: "#1c1917",
-                      border: "1px solid var(--border)",
-                      padding: 18,
-                      cursor: "pointer",
-                      opacity: isPast ? 0.75 : 1,
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                      <span
-                        style={{
-                          fontSize: "0.72rem",
-                          fontWeight: 600,
-                          padding: "2px 8px",
-                          borderRadius: 4,
-                          background: isPast ? "rgba(255,255,255,0.06)" : "rgba(232,168,56,0.15)",
-                          color: isPast ? "var(--text-muted)" : "var(--accent-gold)",
-                        }}
-                      >
-                        {isPast ? "Trip Completed" : "Upcoming Trip"}
-                      </span>
-                      {group.is_owner && (
-                        <span style={{ fontSize: "0.72rem", color: "var(--accent-gold)", fontWeight: 600 }}>
-                          Owner
-                        </span>
-                      )}
-                    </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
+            {/* Pending Invitations */}
+            {pendingInvites.length > 0 && (
+              <section>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                  <h2 style={{ ...sectionHeadingStyle, color: "#B99A65" }}>
+                    Pending Invitations ({pendingInvites.length})
+                  </h2>
+                </div>
 
-                    <h3 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 8px 0", color: "var(--text-primary)" }}>
-                      {group.name}
-                    </h3>
-
-                    <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginBottom: 14 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                        <MapPin size={14} />
-                        {group.destinations?.name || "Destination"}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <Calendar size={14} />
-                        {new Date(group.starts_at).toLocaleDateString()}
-                      </div>
-                    </div>
-
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {pendingInvites.map((group) => (
                     <div
+                      key={group.id}
                       style={{
+                        ...panelStyle,
+                        borderColor: "rgba(185, 154, 101, 0.35)",
+                        padding: "18px 20px",
                         display: "flex",
-                        justifyContent: "flex-end",
+                        justifyContent: "space-between",
                         alignItems: "center",
-                        borderTop: "1px solid rgba(255,255,255,0.06)",
-                        paddingTop: 10,
-                        fontSize: "0.8rem",
-                        color: "var(--text-muted)",
+                        flexWrap: "wrap",
+                        gap: 14,
                       }}
                     >
-                      View Trip Details →
+                      <div>
+                        <h3
+                          style={{
+                            fontFamily: "inherit",
+                            fontSize: "1.05rem",
+                            fontWeight: 500,
+                            margin: 0,
+                            color: "var(--text)",
+                          }}
+                        >
+                          {group.name}
+                        </h3>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 14,
+                            marginTop: 6,
+                            fontSize: "0.82rem",
+                            color: "var(--muted)",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                            <MapPin size={14} style={{ color: "#B99A65" }} />
+                            {group.destinations?.name || "Destination"}
+                          </span>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                            <Clock size={14} />
+                            {new Date(group.starts_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          onClick={() => handleRespond(group.id, "decline")}
+                          disabled={actionLoading === group.id}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            height: 34,
+                            padding: "0 14px",
+                            borderRadius: 999,
+                            background: "var(--hover)",
+                            border: "1px solid var(--line)",
+                            color: "var(--soft)",
+                            fontSize: "0.82rem",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <X size={14} /> Decline
+                        </button>
+                        <button
+                          onClick={() => handleRespond(group.id, "accept")}
+                          disabled={actionLoading === group.id}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            height: 34,
+                            padding: "0 16px",
+                            borderRadius: 999,
+                            background: "#fff",
+                            border: "none",
+                            color: "#0b0f12",
+                            fontSize: "0.82rem",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Check size={14} /> Accept Invitation
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Active Live Trips */}
+            <section>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <Radio size={15} style={{ color: "#00C9A7" }} className="animate-pulse" />
+                <h2 style={sectionHeadingStyle}>Live Active Trips</h2>
+              </div>
+
+              {activeGroups.length === 0 ? (
+                <div style={emptyCardStyle}>
+                  <p style={{ margin: "0 0 4px 0", color: "var(--soft)", fontSize: "0.9375rem", fontWeight: 500 }}>
+                    No trips currently active
+                  </p>
+                  <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.84rem" }}>
+                    Groups automatically become live during their scheduled trip window.
+                  </p>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+                    gap: 16,
+                  }}
+                >
+                  {activeGroups.map((group) => (
+                    <Link
+                      key={group.id}
+                      href={`/groups/${group.id}`}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
+                      <div
+                        style={{
+                          ...panelStyle,
+                          background:
+                            "linear-gradient(145deg, rgba(0, 201, 167, 0.08) 0%, rgba(14, 19, 23, 0.9) 100%)",
+                          borderColor: "rgba(0, 201, 167, 0.35)",
+                          padding: 20,
+                          cursor: "pointer",
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          transition: "transform 0.25s var(--ease), border-color 0.25s var(--ease)",
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              fontSize: "0.7rem",
+                              fontWeight: 600,
+                              letterSpacing: "0.08em",
+                              textTransform: "uppercase",
+                              color: "#00C9A7",
+                              marginBottom: 10,
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 7,
+                                height: 7,
+                                borderRadius: "50%",
+                                background: "#00C9A7",
+                                boxShadow: "0 0 8px rgba(0, 201, 167, 0.8)",
+                                display: "inline-block",
+                              }}
+                            />
+                            Live Radar Active
+                          </div>
+
+                          <h3
+                            style={{
+                              fontFamily: "inherit",
+                              fontSize: "1.125rem",
+                              fontWeight: 500,
+                              margin: "0 0 10px 0",
+                              color: "var(--text)",
+                            }}
+                          >
+                            {group.name}
+                          </h3>
+
+                          <div
+                            style={{
+                              fontSize: "0.84rem",
+                              color: "var(--muted)",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 5,
+                              marginBottom: 18,
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <MapPin size={14} style={{ color: "#B99A65" }} />
+                              <span>{group.destinations?.name || "Destination"}</span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <Clock size={14} />
+                              <span>
+                                Ends{" "}
+                                {new Date(group.ends_at).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            borderTop: "1px solid var(--line)",
+                            paddingTop: 12,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "0.78rem",
+                              color: group.sharing_on ? "#00C9A7" : "var(--muted)",
+                              fontWeight: 500,
+                            }}
+                          >
+                            {group.sharing_on ? "Location Sharing On" : "Location Paused"}
+                          </span>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 5,
+                              fontSize: "0.84rem",
+                              color: "var(--text)",
+                              fontWeight: 500,
+                            }}
+                          >
+                            Open Live Map <ArrowRight size={15} />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Scheduled & Past Trips */}
+            <section>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <Calendar size={15} style={{ color: "var(--muted)" }} />
+                <h2 style={sectionHeadingStyle}>Scheduled &amp; Past Trips</h2>
+              </div>
+
+              {otherGroups.length === 0 ? (
+                <div style={emptyCardStyle}>
+                  <p style={{ margin: "0 0 4px 0", color: "var(--soft)", fontSize: "0.9375rem", fontWeight: 500 }}>
+                    No other travel groups yet
+                  </p>
+                  <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.84rem" }}>
+                    Create a travel group above to coordinate live locations and alerts with your party.
+                  </p>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
+                    gap: 16,
+                  }}
+                >
+                  {otherGroups.map((group) => {
+                    const isPast = new Date(group.ends_at) < new Date() || group.status === "ended";
+                    return (
+                      <Link
+                        key={group.id}
+                        href={`/groups/${group.id}`}
+                        style={{ textDecoration: "none", color: "inherit" }}
+                      >
+                        <div
+                          style={{
+                            ...panelStyle,
+                            padding: 20,
+                            cursor: "pointer",
+                            opacity: isPast ? 0.72 : 1,
+                            height: "100%",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            transition: "border-color 0.25s var(--ease)",
+                          }}
+                        >
+                          <div>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: 10,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.7rem",
+                                  fontWeight: 600,
+                                  letterSpacing: "0.06em",
+                                  textTransform: "uppercase",
+                                  padding: "3px 10px",
+                                  borderRadius: 999,
+                                  background: isPast
+                                    ? "var(--hover)"
+                                    : "rgba(185, 154, 101, 0.14)",
+                                  border: isPast
+                                    ? "1px solid var(--line)"
+                                    : "1px solid rgba(185, 154, 101, 0.3)",
+                                  color: isPast ? "var(--muted)" : "#B99A65",
+                                }}
+                              >
+                                {isPast ? "Trip Completed" : "Upcoming Trip"}
+                              </span>
+                              {group.is_owner && (
+                                <span
+                                  style={{
+                                    fontSize: "0.72rem",
+                                    color: "#00C9A7",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  Owner
+                                </span>
+                              )}
+                            </div>
+
+                            <h3
+                              style={{
+                                fontFamily: "inherit",
+                                fontSize: "1.05rem",
+                                fontWeight: 500,
+                                margin: "0 0 10px 0",
+                                color: "var(--text)",
+                              }}
+                            >
+                              {group.name}
+                            </h3>
+
+                            <div
+                              style={{
+                                fontSize: "0.82rem",
+                                color: "var(--muted)",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 5,
+                                marginBottom: 16,
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <MapPin size={14} style={{ color: "var(--soft)" }} />
+                                <span>{group.destinations?.name || "Destination"}</span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <Calendar size={14} />
+                                <span>{new Date(group.starts_at).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "flex-end",
+                              alignItems: "center",
+                              gap: 4,
+                              borderTop: "1px solid var(--line)",
+                              paddingTop: 12,
+                              fontSize: "0.82rem",
+                              color: "var(--soft)",
+                              fontWeight: 500,
+                            }}
+                          >
+                            View Trip Details <ArrowRight size={14} />
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
           </div>
         )}
       </div>
@@ -439,6 +704,7 @@ export default function GroupsClient() {
       <CreateGroupModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        initialDestinations={initialDestinations}
         onGroupCreated={(newGroup) => {
           setGroups((prev) => [newGroup, ...prev]);
         }}
@@ -446,4 +712,3 @@ export default function GroupsClient() {
     </div>
   );
 }
-

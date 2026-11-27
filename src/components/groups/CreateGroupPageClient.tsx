@@ -3,21 +3,48 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Users, Calendar, MapPin, Shield, Check, AlertCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Shield, Check, AlertCircle, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Destination } from "@/types/database";
 
-export default function CreateGroupPageClient() {
+interface CreateGroupPageClientProps {
+  initialDestinations?: Destination[];
+}
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: "rgba(255, 255, 255, 0.05)",
+  border: "1px solid var(--line)",
+  borderRadius: 10,
+  color: "var(--text)",
+  padding: "10px 14px",
+  fontSize: "0.875rem",
+  fontFamily: "inherit",
+  outline: "none",
+  colorScheme: "dark",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "0.8125rem",
+  fontWeight: 500,
+  color: "var(--soft)",
+  marginBottom: 6,
+};
+
+export default function CreateGroupPageClient({
+  initialDestinations = [],
+}: CreateGroupPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const communityId = searchParams.get("community_id") || undefined;
   const preselectedDestinationId = searchParams.get("destination_id") || undefined;
 
   const [name, setName] = useState("");
-  const [destinationId, setDestinationId] = useState(preselectedDestinationId || "");
-  const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [destinationsLoading, setDestinationsLoading] = useState(false);
-  const [destinationsError, setDestinationsError] = useState<string | null>(null);
+  const [destinationId, setDestinationId] = useState(
+    preselectedDestinationId || initialDestinations[0]?.id || ""
+  );
+  const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [communityMembers, setCommunityMembers] = useState<any[]>([]);
@@ -39,28 +66,19 @@ export default function CreateGroupPageClient() {
     setEndsAt(defaultEnd);
   }, []);
 
-  // Fetch destinations the same way Discover does, ordered by name
+  // Fetch destinations fallback if none provided
   useEffect(() => {
-    let isMounted = true;
+    if (initialDestinations.length > 0) return;
     const fetchDestinations = async () => {
       setDestinationsLoading(true);
       setDestinationsError(null);
       try {
         const supabase = createClient();
-        const { data, error: sbError } = await supabase
-          .from("destinations")
-          .select("*")
-          .order("name");
-
-        if (sbError) {
-          throw sbError;
-        }
-
-        if (isMounted) {
-          const list = data || [];
-          setDestinations(list);
-          if (list.length > 0 && !destinationId) {
-            setDestinationId(preselectedDestinationId || list[0].id);
+        const { data } = await supabase.from("destinations").select("*").order("name");
+        if (data && data.length > 0) {
+          setDestinations(data as Destination[]);
+          if (!destinationId) {
+            setDestinationId(preselectedDestinationId || data[0].id);
           }
         }
       } catch (err: any) {
@@ -75,11 +93,7 @@ export default function CreateGroupPageClient() {
       }
     };
     fetchDestinations();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [preselectedDestinationId]);
+  }, [preselectedDestinationId, destinationId, initialDestinations]);
 
   // If created from a community, fetch community members to invite
   useEffect(() => {
@@ -96,7 +110,6 @@ export default function CreateGroupPageClient() {
         }
         if (data.members) {
           setCommunityMembers(data.members);
-          // By default, select other members
           const otherMemberIds = data.members.map((m: any) => m.user_id);
           setSelectedUserIds(otherMemberIds);
         }
@@ -164,237 +177,295 @@ export default function CreateGroupPageClient() {
   };
 
   return (
-    <div className="container" style={{ paddingBottom: 80, maxWidth: 640 }}>
-      <div style={{ marginTop: 20, marginBottom: 20 }}>
-        <Link
-          href={communityId ? `/communities/${communityId}` : "/groups"}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: "0.85rem",
-            color: "var(--text-secondary)",
-            textDecoration: "none",
-            marginBottom: 12,
-          }}
-        >
-          <ArrowLeft size={16} /> Back
-        </Link>
-        <h1 className="font-display" style={{ fontSize: "1.75rem", fontWeight: 700, margin: "0 0 6px 0", color: "var(--text-primary)" }}>
-          {communityId ? "Convert Community to Travel Group" : "Create Travel Group"}
-        </h1>
-        <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", margin: 0 }}>
-          Enable live location sharing and coordinated safety alerts for your trip.
-        </p>
-      </div>
+    <div
+      style={{
+        minHeight: "calc(100dvh - 76px)",
+        background: "var(--ink)",
+        color: "var(--text)",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 640,
+          margin: "0 auto",
+          padding: "36px 20px 96px",
+        }}
+      >
+        <div style={{ marginBottom: 24 }}>
+          <Link
+            href={communityId ? `/communities/${communityId}` : "/groups"}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: "0.84rem",
+              color: "var(--muted)",
+              textDecoration: "none",
+              marginBottom: 14,
+            }}
+          >
+            <ArrowLeft size={15} /> Back
+          </Link>
 
-      {error && (
-        <div
-          style={{
-            padding: "10px 14px",
-            background: "rgba(239, 68, 68, 0.15)",
-            border: "1px solid rgba(239, 68, 68, 0.3)",
-            borderRadius: 8,
-            color: "#f87171",
-            fontSize: "0.85rem",
-            marginBottom: 16,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <AlertCircle size={16} />
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="card" style={{ padding: 24, background: "#1c1917" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div>
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6 }}>
-              Trip / Group Name *
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Amber Fort Heritage Tour"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={100}
-              required
-              className="input-field"
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6 }}>
-              Destination *
-            </label>
-            <select
-              value={destinationId}
-              onChange={(e) => setDestinationId(e.target.value)}
-              className="input-field"
-              style={{ width: "100%", background: "#26221f" }}
-              required
-              disabled={destinationsLoading}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontSize: "0.7rem",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "#00C9A7",
+                background: "rgba(0, 201, 167, 0.1)",
+                border: "1px solid rgba(0, 201, 167, 0.3)",
+                borderRadius: 999,
+                padding: "3px 10px",
+              }}
             >
-              {destinationsLoading ? (
-                <option value="" disabled>Loading destinations...</option>
-              ) : destinationsError ? (
-                <option value="" disabled>Error loading destinations</option>
-              ) : destinations.length === 0 ? (
-                <option value="" disabled>No destinations available</option>
-              ) : (
-                <option value="" disabled>Select a destination</option>
-              )}
-              {destinations.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name} ({d.region})
-                </option>
-              ))}
-            </select>
-            {destinationsLoading && (
-              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 6 }}>
-                <RefreshCw size={12} className="animate-spin" /> Loading destinations...
-              </p>
-            )}
-            {destinationsError && (
-              <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: 4 }}>
-                {destinationsError}. Please try again later.
-              </p>
-            )}
+              <Users size={11} /> Travel Party Setup
+            </span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6 }}>
-                Trip Window Start *
-              </label>
-              <input
-                type="datetime-local"
-                value={startsAt}
-                onChange={(e) => setStartsAt(e.target.value)}
-                required
-                className="input-field"
-                style={{ width: "100%", fontSize: "0.8rem" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6 }}>
-                Trip Window End *
-              </label>
-              <input
-                type="datetime-local"
-                value={endsAt}
-                onChange={(e) => setEndsAt(e.target.value)}
-                required
-                className="input-field"
-                style={{ width: "100%", fontSize: "0.8rem" }}
-              />
-            </div>
-          </div>
+          <h1
+            style={{
+              fontFamily: "inherit",
+              fontSize: "clamp(1.5rem, 3vw, 1.85rem)",
+              fontWeight: 500,
+              letterSpacing: "-0.02em",
+              margin: "0 0 6px 0",
+              color: "var(--text)",
+            }}
+          >
+            {communityId ? "Convert Community to Travel Group" : "Create Travel Group"}
+          </h1>
+          <p style={{ fontSize: "0.9rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
+            Enable live location sharing and coordinated safety alerts for your trip.
+          </p>
+        </div>
 
-          {/* Member invite checklist if coming from community */}
-          {communityMembers.length > 0 && (
-            <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6 }}>
-                Invite Community Members ({selectedUserIds.length} selected):
-              </label>
-              <div
-                style={{
-                  maxHeight: 180,
-                  overflowY: "auto",
-                  background: "#221f1c",
-                  border: "1px solid var(--border)",
-                  borderRadius: 8,
-                  padding: 8,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                }}
-              >
-                {communityMembers.map((m) => {
-                  const isSelected = selectedUserIds.includes(m.user_id);
-                  return (
-                    <div
-                      key={m.user_id}
-                      onClick={() => toggleSelectMember(m.user_id)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "6px 10px",
-                        borderRadius: 6,
-                        background: isSelected ? "rgba(232, 168, 56, 0.12)" : "transparent",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span style={{ fontSize: "0.85rem" }}>
-                        {m.profiles?.display_name || "Member"}
-                      </span>
-                      <div
-                        style={{
-                          width: 18,
-                          height: 18,
-                          borderRadius: 4,
-                          border: isSelected ? "none" : "1px solid var(--border)",
-                          background: isSelected ? "var(--accent-gold)" : "transparent",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#1a0800",
-                        }}
-                      >
-                        {isSelected && <Check size={13} strokeWidth={3} />}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Privacy Notice */}
+        {error && (
           <div
             style={{
-              padding: 12,
-              background: "rgba(16, 185, 129, 0.08)",
-              border: "1px solid rgba(16, 185, 129, 0.2)",
-              borderRadius: 8,
-              fontSize: "0.78rem",
-              color: "#34d399",
-              lineHeight: 1.4,
+              padding: "10px 14px",
+              background: "rgba(220, 38, 38, 0.12)",
+              border: "1px solid rgba(220, 38, 38, 0.3)",
+              borderRadius: 10,
+              color: "#fca5a5",
+              fontSize: "0.84rem",
+              marginBottom: 16,
               display: "flex",
-              alignItems: "flex-start",
+              alignItems: "center",
               gap: 8,
             }}
           >
-            <Shield size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            {error}
+          </div>
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            background: "var(--panel)",
+            backdropFilter: "blur(22px) saturate(140%)",
+            WebkitBackdropFilter: "blur(22px) saturate(140%)",
+            border: "1px solid var(--line)",
+            borderRadius: 16,
+            padding: 24,
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div>
-              <strong>Strict Privacy Standard:</strong> Invited members receive an invitation they must explicitly accept. Location sharing is never turned on automatically and only activates if a member opts in during the active trip window.
+              <label htmlFor="new-group-name" style={labelStyle}>Trip / Group Name *</label>
+              <input
+                id="new-group-name"
+                name="name"
+                type="text"
+                placeholder="e.g. Amber Fort Heritage Tour"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={100}
+                required
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="new-group-destination" style={labelStyle}>Destination *</label>
+              <select
+                id="new-group-destination"
+                name="destination_id"
+                value={destinationId}
+                onChange={(e) => setDestinationId(e.target.value)}
+                style={{ ...inputStyle, cursor: "pointer" }}
+                required
+              >
+                <option value="" disabled>
+                  Select a destination
+                </option>
+                {destinations.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.region})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
+                <label htmlFor="new-group-starts-at" style={labelStyle}>Trip Window Start *</label>
+                <input
+                  id="new-group-starts-at"
+                  name="starts_at"
+                  type="datetime-local"
+                  value={startsAt}
+                  onChange={(e) => setStartsAt(e.target.value)}
+                  required
+                  style={{ ...inputStyle, fontSize: "0.8rem" }}
+                />
+              </div>
+              <div>
+                <label htmlFor="new-group-ends-at" style={labelStyle}>Trip Window End *</label>
+                <input
+                  id="new-group-ends-at"
+                  name="ends_at"
+                  type="datetime-local"
+                  value={endsAt}
+                  onChange={(e) => setEndsAt(e.target.value)}
+                  required
+                  style={{ ...inputStyle, fontSize: "0.8rem" }}
+                />
+              </div>
+            </div>
+
+            {/* Member invite checklist if coming from community */}
+            {communityMembers.length > 0 && (
+              <div>
+                <label style={labelStyle}>
+                  Invite Community Members ({selectedUserIds.length} selected)
+                </label>
+                <div
+                  style={{
+                    maxHeight: 190,
+                    overflowY: "auto",
+                    background: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 10,
+                    padding: 8,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                  }}
+                >
+                  {communityMembers.map((m) => {
+                    const isSelected = selectedUserIds.includes(m.user_id);
+                    return (
+                      <div
+                        key={m.user_id}
+                        onClick={() => toggleSelectMember(m.user_id)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "8px 10px",
+                          borderRadius: 8,
+                          background: isSelected ? "rgba(0, 201, 167, 0.1)" : "transparent",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span style={{ fontSize: "0.85rem", color: "var(--text)" }}>
+                          {m.profiles?.display_name || "Member"}
+                        </span>
+                        <div
+                          style={{
+                            width: 18,
+                            height: 18,
+                            borderRadius: 5,
+                            border: isSelected ? "none" : "1px solid var(--line)",
+                            background: isSelected ? "#00C9A7" : "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#0b1013",
+                          }}
+                        >
+                          {isSelected && <Check size={13} strokeWidth={3} />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Privacy Notice */}
+            <div
+              style={{
+                padding: 12,
+                background: "rgba(0, 201, 167, 0.08)",
+                border: "1px solid rgba(0, 201, 167, 0.25)",
+                borderRadius: 10,
+                fontSize: "0.78rem",
+                color: "#7ee8d6",
+                lineHeight: 1.45,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 8,
+              }}
+            >
+              <Shield size={16} style={{ flexShrink: 0, marginTop: 2, color: "#00C9A7" }} />
+              <div>
+                <strong>Strict Privacy Standard:</strong> Invited members receive an invitation
+                they must explicitly accept. Location sharing is never turned on automatically and
+                only activates if a member opts in during the active trip window.
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+              <Link
+                href={communityId ? `/communities/${communityId}` : "/groups"}
+                style={{
+                  flex: 1,
+                  height: 42,
+                  borderRadius: 999,
+                  background: "var(--hover)",
+                  border: "1px solid var(--line)",
+                  color: "var(--soft)",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textDecoration: "none",
+                }}
+              >
+                Cancel
+              </Link>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  flex: 2,
+                  height: 42,
+                  borderRadius: 999,
+                  background: "#fff",
+                  border: "none",
+                  color: "#0b0f12",
+                  fontFamily: "inherit",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  cursor: loading ? "not-allowed" : "pointer",
+                  opacity: loading ? 0.7 : 1,
+                }}
+              >
+                {loading ? "Creating Group…" : "Launch Travel Group"}
+              </button>
             </div>
           </div>
-
-          <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-            <Link
-              href={communityId ? `/communities/${communityId}` : "/groups"}
-              className="btn-secondary"
-              style={{ flex: 1, padding: "10px 0", textAlign: "center", textDecoration: "none" }}
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary"
-              style={{ flex: 2, padding: "10px 0" }}
-            >
-              {loading ? "Creating Group..." : "Launch Travel Group"}
-            </button>
-          </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
-

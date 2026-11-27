@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   Users,
@@ -11,24 +12,17 @@ import {
   AlertTriangle,
   Send,
   Navigation,
-  Shield,
   ArrowLeft,
   RefreshCw,
-  LogOut,
   PowerOff,
   Bell,
-  CheckCircle,
+  AlertOctagon,
+  Compass,
 } from "lucide-react";
 import { GROUP_LOCATION_UPDATE_INTERVAL_SECONDS } from "@/config/constants";
+import type { GroupMapMember } from "./GroupMap";
 
-interface MemberLocation {
-  user_id: string;
-  display_name: string;
-  avatar_url: string | null;
-  latitude: number;
-  longitude: number;
-  updated_at: string;
-}
+const GroupMap = dynamic(() => import("./GroupMap"), { ssr: false });
 
 interface GroupAlertItem {
   id: string;
@@ -60,10 +54,27 @@ interface GroupDetail {
   }>;
 }
 
+const sectionCardStyle: React.CSSProperties = {
+  background: "rgba(255, 255, 255, 0.03)",
+  border: "1px solid var(--line)",
+  borderRadius: 14,
+  padding: 16,
+};
+
+const sectionTitleStyle: React.CSSProperties = {
+  fontFamily: "inherit",
+  fontSize: "0.72rem",
+  fontWeight: 600,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "#00C9A7",
+  margin: 0,
+};
+
 export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
   const router = useRouter();
   const [group, setGroup] = useState<GroupDetail | null>(null);
-  const [locations, setLocations] = useState<MemberLocation[]>([]);
+  const [locations, setLocations] = useState<GroupMapMember[]>([]);
   const [alerts, setAlerts] = useState<GroupAlertItem[]>([]);
   const [sharingOn, setSharingOn] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -73,7 +84,7 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
   const [customMsg, setCustomMsg] = useState("");
   const [sendingAlert, setSendingAlert] = useState(false);
   const [lastBroadcast, setLastBroadcast] = useState<Date | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<MemberLocation | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<GroupMapMember | null>(null);
 
   const watchIdRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
@@ -182,14 +193,12 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
       return;
     }
 
-    // Immediately get position once
     navigator.geolocation.getCurrentPosition(
       (pos) => broadcastLocation(pos.coords),
       (err) => setGeoError(`Location error: ${err.message}`),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
     );
 
-    // Watch position
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => broadcastLocation(pos.coords),
       (err) => setGeoError(`Location watch error: ${err.message}`),
@@ -262,7 +271,11 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
 
   // End trip early (owner only)
   const handleEndTrip = async () => {
-    if (!confirm("Are you sure you want to end this trip? All live location sharing will stop and location records will be purged.")) {
+    if (
+      !confirm(
+        "Are you sure you want to end this trip? All live location sharing will stop and location records will be purged."
+      )
+    ) {
       return;
     }
     try {
@@ -299,24 +312,73 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
 
   if (loading) {
     return (
-      <div className="container" style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
-        Loading live group hub...
+      <div
+        style={{
+          minHeight: "calc(100dvh - 76px)",
+          background: "var(--ink)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 12,
+          color: "var(--muted)",
+        }}
+      >
+        <div
+          className="animate-spin"
+          style={{
+            width: 28,
+            height: 28,
+            border: "2px solid rgba(0, 201, 167, 0.2)",
+            borderTopColor: "#00C9A7",
+            borderRadius: "50%",
+          }}
+        />
+        <span style={{ fontSize: "0.875rem" }}>Loading live group radar…</span>
       </div>
     );
   }
 
   if (error || !group) {
     return (
-      <div className="container" style={{ padding: 40, textAlign: "center" }}>
-        <p style={{ color: "#ef4444", marginBottom: 16 }}>{error || "Group not found"}</p>
-        <Link href="/groups" className="btn-secondary" style={{ padding: "8px 16px" }}>
-          Back to Groups
+      <div
+        style={{
+          minHeight: "calc(100dvh - 76px)",
+          background: "var(--ink)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          textAlign: "center",
+        }}
+      >
+        <p style={{ color: "#fca5a5", marginBottom: 16, fontSize: "0.95rem" }}>
+          {error || "Group not found"}
+        </p>
+        <Link
+          href="/groups"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            height: 38,
+            padding: "0 18px",
+            borderRadius: 999,
+            background: "var(--hover)",
+            border: "1px solid var(--line)",
+            color: "var(--text)",
+            fontSize: "0.875rem",
+            textDecoration: "none",
+          }}
+        >
+          <ArrowLeft size={15} /> Back to Groups
         </Link>
       </div>
     );
   }
 
-  // Calculate map center
+  // Default map center based on destination if no locations are live yet
   let centerLat = 28.6139;
   let centerLng = 77.209;
   if (selectedLocation) {
@@ -331,114 +393,23 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
   }
 
   return (
-    <div className="container" style={{ paddingBottom: 80, maxWidth: 900 }}>
-      {/* Back button & Title */}
-      <div style={{ marginTop: 16, marginBottom: 16 }}>
-        <Link
-          href="/groups"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: "0.85rem",
-            color: "var(--text-secondary)",
-            textDecoration: "none",
-            marginBottom: 10,
-          }}
-        >
-          <ArrowLeft size={16} /> All Groups
-        </Link>
-
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
-          <div>
-            <h1 className="font-display" style={{ fontSize: "1.75rem", fontWeight: 700, margin: "0 0 4px 0", color: "var(--text-primary)" }}>
-              {group.name}
-            </h1>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <MapPin size={15} color="var(--accent-gold)" /> {group.destinations?.name || "Destination"}
-              </span>
-              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <Clock size={15} />
-                {new Date(group.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} –{" "}
-                {new Date(group.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            </div>
-          </div>
-
-          {/* Trip Status Pill */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span
-              style={{
-                fontSize: "0.8rem",
-                fontWeight: 700,
-                padding: "6px 12px",
-                borderRadius: 999,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                background: group.is_active_now
-                  ? "rgba(16, 185, 129, 0.15)"
-                  : "rgba(255, 255, 255, 0.08)",
-                color: group.is_active_now ? "#34d399" : "var(--text-muted)",
-                border: group.is_active_now
-                  ? "1px solid rgba(16, 185, 129, 0.4)"
-                  : "1px solid rgba(255, 255, 255, 0.1)",
-              }}
-            >
-              {group.is_active_now ? (
-                <>
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      background: "#10b981",
-                      display: "inline-block",
-                    }}
-                  />
-                  TRIP WINDOW ACTIVE
-                </>
-              ) : (
-                "TRIP NOT ACTIVE"
-              )}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Geolocation Error Notification */}
-      {geoError && (
-        <div
-          style={{
-            padding: "10px 14px",
-            background: "rgba(239, 68, 68, 0.15)",
-            border: "1px solid rgba(239, 68, 68, 0.3)",
-            borderRadius: 8,
-            color: "#f87171",
-            fontSize: "0.85rem",
-            marginBottom: 16,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <AlertTriangle size={16} />
-          {geoError}
-        </div>
-      )}
-
-      {/* PRD Mandated Sharing Indicator Bar */}
+    <div
+      style={{
+        minHeight: "calc(100dvh - 76px)",
+        background: "var(--ink)",
+        color: "var(--text)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Top Sub-bar: Breadcrumb, Group Title, Trip Status & Actions */}
       <div
-        className="card"
         style={{
-          background: sharingOn
-            ? "linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(24, 21, 18, 0.95) 100%)"
-            : "#1c1917",
-          border: sharingOn ? "1px solid #10b981" : "1px solid var(--border)",
-          padding: "14px 20px",
-          borderRadius: 14,
-          marginBottom: 20,
+          padding: "14px clamp(20px, 3.4vw, 40px)",
+          borderBottom: "1px solid var(--line)",
+          background: "var(--panel)",
+          backdropFilter: "blur(22px) saturate(140%)",
+          WebkitBackdropFilter: "blur(22px) saturate(140%)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -446,426 +417,730 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
           gap: 12,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          <Link
+            href="/groups"
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              background: sharingOn ? "rgba(16, 185, 129, 0.2)" : "rgba(255, 255, 255, 0.05)",
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              justifyContent: "center",
-              color: sharingOn ? "#10b981" : "var(--text-muted)",
+              gap: 6,
+              height: 32,
+              padding: "0 12px",
+              borderRadius: 999,
+              background: "var(--hover)",
+              border: "1px solid var(--line)",
+              fontSize: "0.8rem",
+              color: "var(--soft)",
+              textDecoration: "none",
             }}
           >
-            <Radio size={22} className={sharingOn ? "animate-pulse" : ""} />
-          </div>
+            <ArrowLeft size={14} /> All Groups
+          </Link>
+
           <div>
-            <div
+            <h1
               style={{
-                fontSize: "0.95rem",
-                fontWeight: 700,
-                color: sharingOn ? "#34d399" : "var(--text-primary)",
+                fontFamily: "inherit",
+                fontSize: "1.125rem",
+                fontWeight: 500,
+                margin: 0,
+                color: "var(--text)",
               }}
             >
-              {sharingOn
-                ? "You are sharing your location with this group"
-                : "Location sharing is currently paused"}
-            </div>
-            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-              {sharingOn
-                ? lastBroadcast
-                  ? `Last synced: ${lastBroadcast.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })} (synced every 10s)`
-                  : "Syncing location every 10 seconds..."
-                : "You are invisible to other group members on this map."}
+              {group.name}
+            </h1>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                fontSize: "0.78rem",
+                color: "var(--muted)",
+                marginTop: 2,
+                flexWrap: "wrap",
+              }}
+            >
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <MapPin size={13} style={{ color: "#B99A65" }} />
+                {group.destinations?.name || "Destination"}
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <Clock size={13} />
+                {new Date(group.starts_at).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}{" "}
+                –{" "}
+                {new Date(group.ends_at).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
             </div>
           </div>
         </div>
 
-        <button
-          onClick={toggleSharing}
-          disabled={sharingLoading || !group.is_active_now}
-          className={sharingOn ? "btn-secondary" : "btn-primary"}
-          style={{
-            padding: "8px 18px",
-            fontSize: "0.85rem",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          {sharingLoading ? (
-            <RefreshCw size={15} className="animate-spin" />
-          ) : sharingOn ? (
-            <>
-              <PowerOff size={15} /> Pause Sharing
-            </>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span
+            style={{
+              fontSize: "0.72rem",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              padding: "5px 12px",
+              borderRadius: 999,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: group.is_active_now ? "rgba(0, 201, 167, 0.12)" : "var(--hover)",
+              color: group.is_active_now ? "#00C9A7" : "var(--muted)",
+              border: group.is_active_now
+                ? "1px solid rgba(0, 201, 167, 0.35)"
+                : "1px solid var(--line)",
+            }}
+          >
+            {group.is_active_now ? (
+              <>
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: "#00C9A7",
+                    boxShadow: "0 0 8px rgba(0, 201, 167, 0.8)",
+                    display: "inline-block",
+                  }}
+                />
+                Trip Window Active
+              </>
+            ) : (
+              "Trip Not Active"
+            )}
+          </span>
+
+          {group.is_owner ? (
+            <button
+              onClick={handleEndTrip}
+              style={{
+                height: 32,
+                padding: "0 12px",
+                borderRadius: 999,
+                background: "rgba(220, 38, 38, 0.1)",
+                border: "1px solid rgba(220, 38, 38, 0.35)",
+                color: "#fca5a5",
+                fontSize: "0.78rem",
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+            >
+              End Trip Early
+            </button>
           ) : (
-            <>
-              <Navigation size={15} /> Share Location
-            </>
+            <button
+              onClick={handleLeaveGroup}
+              style={{
+                height: 32,
+                padding: "0 12px",
+                borderRadius: 999,
+                background: "var(--hover)",
+                border: "1px solid var(--line)",
+                color: "var(--muted)",
+                fontSize: "0.78rem",
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+            >
+              Leave Group
+            </button>
           )}
-        </button>
+        </div>
       </div>
 
-      {/* OpenStreetMap Interactive Live Display */}
-      <div
-        className="card"
-        style={{
-          padding: 0,
-          overflow: "hidden",
-          position: "relative",
-          height: 380,
-          borderRadius: 14,
-          border: "1px solid var(--border)",
-          background: "#181512",
-          marginBottom: 16,
-        }}
-      >
-        <iframe
-          title={`Group Map - ${group.name}`}
-          width="100%"
-          height="100%"
-          frameBorder="0"
-          scrolling="no"
-          marginHeight={0}
-          marginWidth={0}
-          src={`https://www.openstreetmap.org/export/embed.html?bbox=${centerLng - 0.04}%2C${centerLat - 0.03}%2C${centerLng + 0.04}%2C${centerLat + 0.03}&layer=mapnik&marker=${centerLat}%2C${centerLng}`}
-          style={{ border: 0, filter: "invert(90%) hue-rotate(180deg) contrast(95%)" }}
-        />
-
-        {/* Live Active Sharers Counter Badge */}
+      {/* Geolocation Error Banner */}
+      {geoError && (
         <div
           style={{
-            position: "absolute",
-            top: 12,
-            left: 12,
-            background: "rgba(24, 21, 18, 0.9)",
-            backdropFilter: "blur(6px)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            padding: "6px 12px",
-            borderRadius: 8,
-            fontSize: "0.78rem",
-            color: "var(--text-primary)",
+            margin: "12px clamp(20px, 3.4vw, 40px) 0",
+            padding: "10px 14px",
+            background: "rgba(220, 38, 38, 0.12)",
+            border: "1px solid rgba(220, 38, 38, 0.35)",
+            borderRadius: 10,
+            color: "#fca5a5",
+            fontSize: "0.84rem",
             display: "flex",
             alignItems: "center",
-            gap: 6,
-            zIndex: 10,
+            gap: 8,
           }}
         >
-          <Radio size={14} color="#10b981" />
-          <span>
-            <strong>{locations.length}</strong> {locations.length === 1 ? "member" : "members"} sharing live
-          </span>
+          <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+          {geoError}
         </div>
+      )}
 
-        {/* Selected Member Pin indicator */}
-        {selectedLocation && (
+      {/* 2-Column Dashboard Layout (Aligned with Solo Mode) */}
+      <div className="wl-group-dashboard">
+        {/* Left Sidebar */}
+        <aside className="wl-group-sidebar">
+          {/* 1. Location Sharing Control */}
           <div
             style={{
-              position: "absolute",
-              top: 12,
-              right: 12,
-              background: "rgba(232, 168, 56, 0.95)",
-              color: "#1a0800",
-              fontWeight: 700,
-              padding: "6px 12px",
-              borderRadius: 8,
-              fontSize: "0.78rem",
-              zIndex: 10,
+              ...sectionCardStyle,
+              background: sharingOn
+                ? "linear-gradient(145deg, rgba(0, 201, 167, 0.12) 0%, rgba(14, 19, 23, 0.85) 100%)"
+                : "rgba(255, 255, 255, 0.03)",
+              borderColor: sharingOn ? "rgba(0, 201, 167, 0.45)" : "var(--line)",
             }}
           >
-            Focused: {selectedLocation.display_name}
-          </div>
-        )}
-      </div>
-
-      {/* Member Radar Cards (Horizontal List) */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>
-          Live Member Radar (Updates every 10s):
-        </div>
-
-        {locations.length === 0 ? (
-          <div
-            style={{
-              padding: 12,
-              background: "#1c1917",
-              borderRadius: 8,
-              fontSize: "0.82rem",
-              color: "var(--text-muted)",
-              border: "1px dashed var(--border)",
-            }}
-          >
-            No members are currently sharing location. Enable sharing above to appear on the radar.
-          </div>
-        ) : (
-          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6 }}>
-            {locations.map((loc) => (
-              <button
-                key={loc.user_id}
-                onClick={() => setSelectedLocation(loc)}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <div
                 style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: "50%",
+                  background: sharingOn ? "rgba(0, 201, 167, 0.18)" : "var(--hover)",
                   display: "flex",
                   alignItems: "center",
-                  gap: 10,
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  background: selectedLocation?.user_id === loc.user_id ? "rgba(232, 168, 56, 0.2)" : "#221f1c",
-                  border: selectedLocation?.user_id === loc.user_id ? "1px solid var(--accent-gold)" : "1px solid rgba(255,255,255,0.1)",
-                  color: "var(--text-primary)",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
+                  justifyContent: "center",
+                  color: sharingOn ? "#00C9A7" : "var(--muted)",
                   flexShrink: 0,
                 }}
               >
+                <Radio size={17} className={sharingOn ? "animate-pulse" : ""} />
+              </div>
+              <div>
                 <div
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: "var(--gradient-gold)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.75rem",
-                    fontWeight: 800,
-                    color: "#1a0800",
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    color: sharingOn ? "#00C9A7" : "var(--text)",
                   }}
                 >
-                  {loc.display_name.charAt(0).toUpperCase()}
+                  {sharingOn ? "Live Sharing Active" : "Location Sharing Paused"}
                 </div>
-                <div style={{ textAlign: "left" }}>
-                  <div style={{ fontSize: "0.82rem", fontWeight: 600 }}>{loc.display_name}</div>
-                  <div style={{ fontSize: "0.72rem", color: "#34d399", display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
-                    Live ({loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)})
-                  </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                  {sharingOn
+                    ? lastBroadcast
+                      ? `Synced ${lastBroadcast.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })} (10s)`
+                      : "Syncing every 10s…"
+                    : "You are invisible to group members"}
                 </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Safety & Regroup Alerts Broadcast Panel */}
-      <div
-        className="card"
-        style={{
-          background: "#1c1917",
-          border: "1px solid var(--border)",
-          padding: 20,
-          borderRadius: 14,
-          marginBottom: 24,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-          <Bell size={18} color="var(--accent-gold)" />
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0, color: "var(--text-primary)" }}>
-            Group Safety Alerts
-          </h2>
-        </div>
-
-        {/* Quick action buttons */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-          <button
-            onClick={() => sendAlert("need_help")}
-            disabled={sendingAlert}
-            style={{
-              padding: "12px 16px",
-              borderRadius: 10,
-              background: "rgba(239, 68, 68, 0.15)",
-              border: "1px solid rgba(239, 68, 68, 0.4)",
-              color: "#f87171",
-              fontWeight: 700,
-              fontSize: "0.85rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              cursor: "pointer",
-            }}
-          >
-            🚨 Need Help Alert
-          </button>
-
-          <button
-            onClick={() => sendAlert("regroup")}
-            disabled={sendingAlert}
-            style={{
-              padding: "12px 16px",
-              borderRadius: 10,
-              background: "rgba(232, 168, 56, 0.15)",
-              border: "1px solid rgba(232, 168, 56, 0.4)",
-              color: "var(--accent-gold)",
-              fontWeight: 700,
-              fontSize: "0.85rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              cursor: "pointer",
-            }}
-          >
-            📍 Regroup Request
-          </button>
-        </div>
-
-        {/* Custom message input */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          <input
-            type="text"
-            placeholder="Send custom alert to group members..."
-            value={customMsg}
-            onChange={(e) => setCustomMsg(e.target.value)}
-            maxLength={200}
-            className="input-field"
-            style={{ flex: 1, fontSize: "0.85rem" }}
-          />
-          <button
-            onClick={() => sendAlert("custom_message")}
-            disabled={sendingAlert || !customMsg.trim()}
-            className="btn-primary"
-            style={{ padding: "8px 16px", display: "flex", alignItems: "center", gap: 6 }}
-          >
-            <Send size={15} /> Send
-          </button>
-        </div>
-
-        {/* Recent Alerts Feed */}
-        {alerts.length > 0 && (
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 12 }}>
-            <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 8 }}>
-              Recent Alerts:
+              </div>
             </div>
+
+            <button
+              onClick={toggleSharing}
+              disabled={sharingLoading || !group.is_active_now}
+              style={{
+                width: "100%",
+                height: 38,
+                borderRadius: 999,
+                background: sharingOn ? "var(--hover)" : "#fff",
+                border: sharingOn ? "1px solid var(--line)" : "none",
+                color: sharingOn ? "var(--text)" : "#0b0f12",
+                fontSize: "0.84rem",
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                cursor: sharingLoading || !group.is_active_now ? "not-allowed" : "pointer",
+                opacity: sharingLoading || !group.is_active_now ? 0.55 : 1,
+              }}
+            >
+              {sharingLoading ? (
+                <RefreshCw size={15} className="animate-spin" />
+              ) : sharingOn ? (
+                <>
+                  <PowerOff size={14} /> Pause Sharing
+                </>
+              ) : (
+                <>
+                  <Navigation size={14} /> Share Location
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* 2. Live Member Radar */}
+          <div style={sectionCardStyle}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 12,
+              }}
+            >
+              <h2 style={sectionTitleStyle}>Live Member Radar</h2>
+              <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>
+                {locations.length} live
+              </span>
+            </div>
+
+            {locations.length === 0 ? (
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--muted)", lineHeight: 1.5 }}>
+                No members are currently sharing location. Enable sharing above to appear on the map.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {locations.map((loc) => {
+                  const isSelected = selectedLocation?.user_id === loc.user_id;
+                  return (
+                    <button
+                      key={loc.user_id}
+                      onClick={() =>
+                        setSelectedLocation(isSelected ? null : loc)
+                      }
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "9px 12px",
+                        borderRadius: 10,
+                        background: isSelected ? "rgba(185, 154, 101, 0.14)" : "var(--hover)",
+                        border: isSelected
+                          ? "1px solid rgba(185, 154, 101, 0.5)"
+                          : "1px solid var(--line)",
+                        color: "var(--text)",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: "50%",
+                          background: isSelected ? "#B99A65" : "#00C9A7",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: "#0b1013",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {loc.display_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div
+                          style={{
+                            fontSize: "0.82rem",
+                            fontWeight: 500,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {loc.display_name}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.72rem",
+                            color: "#00C9A7",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              background: "#00C9A7",
+                            }}
+                          />
+                          {loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 3. Group Safety Alerts */}
+          <div style={sectionCardStyle}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+              <Bell size={14} style={{ color: "#B99A65" }} />
+              <h2 style={{ ...sectionTitleStyle, color: "#B99A65" }}>Group Safety Alerts</h2>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+              <button
+                onClick={() => sendAlert("need_help")}
+                disabled={sendingAlert}
+                style={{
+                  height: 38,
+                  padding: "0 10px",
+                  borderRadius: 10,
+                  background: "var(--danger)",
+                  border: "none",
+                  color: "#ffffff",
+                  fontWeight: 600,
+                  fontSize: "0.78rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  cursor: sendingAlert ? "not-allowed" : "pointer",
+                  boxShadow: "0 4px 14px rgba(220, 38, 38, 0.35)",
+                }}
+              >
+                <AlertOctagon size={14} /> Need Help
+              </button>
+
+              <button
+                onClick={() => sendAlert("regroup")}
+                disabled={sendingAlert}
+                style={{
+                  height: 38,
+                  padding: "0 10px",
+                  borderRadius: 10,
+                  background: "rgba(0, 201, 167, 0.12)",
+                  border: "1px solid rgba(0, 201, 167, 0.35)",
+                  color: "#00C9A7",
+                  fontWeight: 500,
+                  fontSize: "0.78rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  cursor: sendingAlert ? "not-allowed" : "pointer",
+                }}
+              >
+                <Compass size={14} /> Regroup
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: 6, marginBottom: alerts.length > 0 ? 12 : 0 }}>
+              <input
+                type="text"
+                placeholder="Custom alert message…"
+                value={customMsg}
+                onChange={(e) => setCustomMsg(e.target.value)}
+                maxLength={200}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  height: 36,
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid var(--line)",
+                  borderRadius: 10,
+                  color: "var(--text)",
+                  padding: "0 12px",
+                  fontSize: "0.8rem",
+                  fontFamily: "inherit",
+                  outline: "none",
+                }}
+              />
+              <button
+                onClick={() => sendAlert("custom_message")}
+                disabled={sendingAlert || !customMsg.trim()}
+                aria-label="Send custom alert"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: "#fff",
+                  border: "none",
+                  color: "#0b0f12",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: sendingAlert || !customMsg.trim() ? "not-allowed" : "pointer",
+                  opacity: sendingAlert || !customMsg.trim() ? 0.5 : 1,
+                  flexShrink: 0,
+                }}
+              >
+                <Send size={14} />
+              </button>
+            </div>
+
+            {alerts.length > 0 && (
+              <div
+                style={{
+                  borderTop: "1px solid var(--line)",
+                  paddingTop: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                {alerts.slice(0, 4).map((a) => (
+                  <div
+                    key={a.id}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      background:
+                        a.type === "need_help" ? "rgba(220, 38, 38, 0.14)" : "var(--hover)",
+                      border:
+                        a.type === "need_help"
+                          ? "1px solid rgba(220, 38, 38, 0.35)"
+                          : "1px solid var(--line)",
+                      fontSize: "0.78rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 2,
+                      }}
+                    >
+                      <span style={{ fontWeight: 500, color: "var(--text)" }}>
+                        {a.profiles?.display_name || "Member"}
+                      </span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>
+                        {new Date(a.created_at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    <div style={{ color: a.type === "need_help" ? "#fca5a5" : "var(--soft)" }}>
+                      {a.type === "need_help"
+                        ? "Sent a NEED HELP alert!"
+                        : a.type === "regroup"
+                        ? "Requested everyone regroup"
+                        : a.body}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 4. Member Roster */}
+          <div style={sectionCardStyle}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+              <Users size={14} style={{ color: "var(--soft)" }} />
+              <h2 style={{ ...sectionTitleStyle, color: "var(--soft)" }}>
+                Members ({group.members.length})
+              </h2>
+            </div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {alerts.slice(0, 5).map((a) => (
+              {group.members.map((m) => (
                 <div
-                  key={a.id}
+                  key={m.user_id}
                   style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    background: a.type === "need_help" ? "rgba(239, 68, 68, 0.12)" : "rgba(255,255,255,0.04)",
-                    border: a.type === "need_help" ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid rgba(255,255,255,0.06)",
-                    fontSize: "0.82rem",
                     display: "flex",
-                    justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 10,
+                    padding: "8px 10px",
+                    borderRadius: 10,
+                    background: "rgba(255, 255, 255, 0.025)",
+                    border: "1px solid var(--line)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span>
-                      {a.type === "need_help" ? "🚨" : a.type === "regroup" ? "📍" : "💬"}
-                    </span>
-                    <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
-                      {a.profiles?.display_name || "Member"}:
-                    </span>
-                    <span style={{ color: "var(--text-secondary)" }}>
-                      {a.type === "need_help" ? "Sent a NEED HELP alert!" : a.type === "regroup" ? "Requested everyone regroup!" : a.body}
-                    </span>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "rgba(0, 201, 167, 0.16)",
+                      border: "1px solid rgba(0, 201, 167, 0.3)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 600,
+                      fontSize: "0.75rem",
+                      color: "#00C9A7",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {m.profiles?.display_name?.charAt(0).toUpperCase() || "M"}
                   </div>
-                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                    {new Date(a.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: "0.82rem",
+                        fontWeight: 500,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {m.profiles?.display_name || "Member"}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.72rem",
+                        color: m.sharing_on ? "#00C9A7" : "var(--muted)",
+                      }}
+                    >
+                      {m.sharing_on
+                        ? "Sharing Live"
+                        : m.status === "invited"
+                        ? "Invited"
+                        : "Paused"}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        )}
-      </div>
+        </aside>
 
-      {/* Member Roster & Trip Controls */}
-      <div
-        className="card"
-        style={{
-          background: "#1c1917",
-          border: "1px solid var(--border)",
-          padding: 20,
-          borderRadius: 14,
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Users size={18} color="var(--accent-gold)" />
-            <h2 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0, color: "var(--text-primary)" }}>
-              Group Members ({group.members.length})
-            </h2>
-          </div>
+        {/* Main Interactive Dark Leaflet Map */}
+        <div className="wl-group-map-area">
+          <div style={{ flex: 1, position: "relative", minHeight: 420 }}>
+            <GroupMap
+              locations={locations}
+              selectedUserId={selectedLocation?.user_id || null}
+              defaultCenter={{ lat: centerLat, lng: centerLng }}
+              onSelectMember={(member) => setSelectedLocation(member)}
+            />
 
-          <div style={{ display: "flex", gap: 8 }}>
-            {group.is_owner ? (
+            {/* Floating Live Count Badge */}
+            <div
+              style={{
+                position: "absolute",
+                top: 14,
+                left: 56,
+                background: "var(--panel)",
+                backdropFilter: "blur(22px) saturate(140%)",
+                WebkitBackdropFilter: "blur(22px) saturate(140%)",
+                border: "1px solid var(--line)",
+                padding: "6px 14px",
+                borderRadius: 999,
+                fontSize: "0.78rem",
+                color: "var(--text)",
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+                zIndex: 10,
+                pointerEvents: "none",
+              }}
+            >
+              <Radio size={13} style={{ color: "#00C9A7" }} />
+              <span>
+                <strong>{locations.length}</strong>{" "}
+                {locations.length === 1 ? "member" : "members"} sharing live
+              </span>
+            </div>
+
+            {selectedLocation && (
               <button
-                onClick={handleEndTrip}
-                className="btn-secondary"
+                onClick={() => setSelectedLocation(null)}
                 style={{
-                  padding: "6px 12px",
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  background: "var(--panel)",
+                  backdropFilter: "blur(22px) saturate(140%)",
+                  WebkitBackdropFilter: "blur(22px) saturate(140%)",
+                  border: "1px solid rgba(185, 154, 101, 0.5)",
+                  color: "#B99A65",
+                  fontWeight: 500,
+                  padding: "6px 14px",
+                  borderRadius: 999,
                   fontSize: "0.78rem",
-                  color: "#f87171",
-                  borderColor: "rgba(239, 68, 68, 0.3)",
+                  zIndex: 10,
+                  cursor: "pointer",
                 }}
               >
-                End Trip Early
-              </button>
-            ) : (
-              <button
-                onClick={handleLeaveGroup}
-                className="btn-secondary"
-                style={{
-                  padding: "6px 12px",
-                  fontSize: "0.78rem",
-                  color: "var(--text-muted)",
-                }}
-              >
-                Leave Group
+                Focused: {selectedLocation.display_name} ×
               </button>
             )}
           </div>
-        </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
-          {group.members.map((m) => (
-            <div
-              key={m.user_id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "8px 12px",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.06)",
-              }}
-            >
-              <div
+          {/* Bottom Status Bar (Aligned with Solo Mode) */}
+          <div
+            style={{
+              height: 38,
+              background: "var(--panel)",
+              borderTop: "1px solid var(--line)",
+              display: "flex",
+              alignItems: "center",
+              padding: "0 20px",
+              gap: 20,
+              fontSize: "0.75rem",
+              color: "var(--muted)",
+              fontFamily: "monospace",
+            }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 8,
+                  height: 8,
                   borderRadius: "50%",
-                  background: "rgba(232, 168, 56, 0.2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 700,
-                  fontSize: "0.8rem",
-                  color: "var(--accent-gold)",
+                  background: sharingOn ? "#00C9A7" : "var(--muted)",
+                  boxShadow: sharingOn ? "0 0 6px rgba(0, 201, 167, 0.7)" : "none",
                 }}
-              >
-                {m.profiles?.display_name?.charAt(0).toUpperCase() || "M"}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {m.profiles?.display_name || "Member"}
-                </div>
-                <div style={{ fontSize: "0.72rem", color: m.sharing_on ? "#34d399" : "var(--text-muted)" }}>
-                  {m.sharing_on ? "📍 Location Sharing On" : m.status === "invited" ? "⏳ Invited" : "⏸️ Location Paused"}
-                </div>
-              </div>
-            </div>
-          ))}
+              />
+              {sharingOn ? "Broadcast Active" : "Sharing Paused"}
+            </span>
+            <span>Poll Interval: 10s</span>
+            {lastBroadcast && (
+              <span>
+                Last synced{" "}
+                {lastBroadcast.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
+              </span>
+            )}
+          </div>
         </div>
       </div>
+
+      <style>{`
+        .wl-group-dashboard {
+          display: grid;
+          grid-template-columns: 350px 1fr;
+          flex: 1;
+          min-height: calc(100dvh - 145px);
+          background: var(--ink);
+        }
+        .wl-group-sidebar {
+          background: var(--ink);
+          border-right: 1px solid var(--line);
+          padding: 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          overflow-y: auto;
+          max-height: calc(100dvh - 145px);
+        }
+        .wl-group-map-area {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          min-height: calc(100dvh - 145px);
+        }
+        @media (max-width: 900px) {
+          .wl-group-dashboard {
+            grid-template-columns: 1fr;
+            min-height: auto;
+            padding-bottom: 76px;
+          }
+          .wl-group-sidebar {
+            border-right: none;
+            border-bottom: 1px solid var(--line);
+            max-height: none;
+            order: 2;
+          }
+          .wl-group-map-area {
+            min-height: 440px;
+            height: 55vh;
+            order: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
-

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Calendar, MapPin, Users, AlertCircle, Shield, RefreshCw } from "lucide-react";
+import { X, Users, AlertCircle, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Destination } from "@/types/database";
 
@@ -14,19 +14,40 @@ interface CreateGroupModalProps {
   initialDestinations?: Destination[];
 }
 
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: "rgba(255, 255, 255, 0.05)",
+  border: "1px solid var(--line)",
+  borderRadius: 10,
+  color: "var(--text)",
+  padding: "10px 14px",
+  fontSize: "0.875rem",
+  fontFamily: "inherit",
+  outline: "none",
+  colorScheme: "dark",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "0.8125rem",
+  fontWeight: 500,
+  color: "var(--soft)",
+  marginBottom: 6,
+};
+
 export default function CreateGroupModal({
   isOpen,
   onClose,
   onGroupCreated,
   initialCommunityId,
   initialDestinationId,
-  initialDestinations,
+  initialDestinations = [],
 }: CreateGroupModalProps) {
   const [name, setName] = useState("");
-  const [destinationId, setDestinationId] = useState(initialDestinationId || "");
-  const [destinations, setDestinations] = useState<Destination[]>(initialDestinations || []);
-  const [destinationsLoading, setDestinationsLoading] = useState(false);
-  const [destinationsError, setDestinationsError] = useState<string | null>(null);
+  const [destinationId, setDestinationId] = useState(
+    initialDestinationId || initialDestinations[0]?.id || ""
+  );
+  const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,8 +71,7 @@ export default function CreateGroupModal({
 
   useEffect(() => {
     if (!isOpen) return;
-
-    if (initialDestinations && initialDestinations.length > 0) {
+    if (initialDestinations.length > 0) {
       setDestinations(initialDestinations);
       if (!destinationId) {
         setDestinationId(initialDestinationId || initialDestinations[0].id);
@@ -59,26 +79,16 @@ export default function CreateGroupModal({
       return;
     }
 
-    let isMounted = true;
     const fetchDestinations = async () => {
       setDestinationsLoading(true);
       setDestinationsError(null);
       try {
         const supabase = createClient();
-        const { data, error: sbError } = await supabase
-          .from("destinations")
-          .select("*")
-          .order("name");
-
-        if (sbError) {
-          throw sbError;
-        }
-
-        if (isMounted) {
-          const list = data || [];
-          setDestinations(list);
-          if (list.length > 0 && !destinationId) {
-            setDestinationId(initialDestinationId || list[0].id);
+        const { data } = await supabase.from("destinations").select("*").order("name");
+        if (data && data.length > 0) {
+          setDestinations(data as Destination[]);
+          if (!destinationId) {
+            setDestinationId(initialDestinationId || data[0].id);
           }
         }
       } catch (err: any) {
@@ -94,11 +104,7 @@ export default function CreateGroupModal({
     };
 
     fetchDestinations();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen, initialDestinationId, initialDestinations]);
+  }, [isOpen, initialDestinationId, destinationId, initialDestinations]);
 
   if (!isOpen) return null;
 
@@ -158,8 +164,9 @@ export default function CreateGroupModal({
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(0,0,0,0.75)",
-        backdropFilter: "blur(4px)",
+        backgroundColor: "rgba(6, 10, 12, 0.78)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         zIndex: 100,
         display: "flex",
         alignItems: "center",
@@ -168,54 +175,79 @@ export default function CreateGroupModal({
       }}
     >
       <div
-        className="card"
         style={{
           width: "100%",
           maxWidth: 480,
-          background: "#1c1917",
-          border: "1px solid var(--border)",
+          background: "var(--panel)",
+          backdropFilter: "blur(22px) saturate(140%)",
+          WebkitBackdropFilter: "blur(22px) saturate(140%)",
+          border: "1px solid var(--line)",
           borderRadius: 16,
           padding: 24,
           maxHeight: "90vh",
           overflowY: "auto",
+          boxShadow: "0 30px 70px rgba(0, 0, 0, 0.65)",
+          color: "var(--text)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
               style={{
-                width: 36,
-                height: 36,
+                width: 38,
+                height: 38,
                 borderRadius: 10,
-                background: "rgba(232, 168, 56, 0.15)",
+                background: "rgba(0, 201, 167, 0.12)",
+                border: "1px solid rgba(0, 201, 167, 0.3)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "var(--accent-gold)",
+                color: "#00C9A7",
               }}
             >
-              <Users size={20} />
+              <Users size={19} />
             </div>
             <div>
-              <h2 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0, color: "var(--text-primary)" }}>
+              <h2
+                style={{
+                  fontFamily: "inherit",
+                  fontSize: "1.125rem",
+                  fontWeight: 500,
+                  margin: 0,
+                  color: "var(--text)",
+                }}
+              >
                 Create Travel Group
               </h2>
-              <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
-                Live location sharing & group safety alerts
+              <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "2px 0 0" }}>
+                Live location sharing &amp; group safety alerts
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label="Close modal"
             style={{
-              background: "transparent",
-              border: "none",
-              color: "var(--text-muted)",
+              background: "var(--hover)",
+              border: "1px solid var(--line)",
+              borderRadius: "50%",
+              width: 32,
+              height: 32,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--soft)",
               cursor: "pointer",
-              padding: 4,
             }}
           >
-            <X size={20} />
+            <X size={16} />
           </button>
         </div>
 
@@ -223,103 +255,88 @@ export default function CreateGroupModal({
           <div
             style={{
               padding: "10px 14px",
-              background: "rgba(239, 68, 68, 0.15)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              borderRadius: 8,
-              color: "#f87171",
-              fontSize: "0.85rem",
+              background: "rgba(220, 38, 38, 0.12)",
+              border: "1px solid rgba(220, 38, 38, 0.3)",
+              borderRadius: 10,
+              color: "#fca5a5",
+              fontSize: "0.84rem",
               marginBottom: 16,
               display: "flex",
               alignItems: "center",
               gap: 8,
             }}
           >
-            <AlertCircle size={16} />
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6 }}>
-              Group Name *
-            </label>
+            <label htmlFor="modal-group-name" style={labelStyle}>Group Name *</label>
             <input
+              id="modal-group-name"
+              name="name"
               type="text"
               placeholder="e.g. Amber Fort Sunset Squad"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={100}
               required
-              className="input-field"
-              style={{ width: "100%" }}
+              style={inputStyle}
             />
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6 }}>
-              Destination *
-            </label>
+            <label htmlFor="modal-group-destination" style={labelStyle}>Destination *</label>
             <select
+              id="modal-group-destination"
+              name="destination_id"
               value={destinationId}
               onChange={(e) => setDestinationId(e.target.value)}
-              className="input-field"
-              style={{ width: "100%", background: "#26221f" }}
+              style={{ ...inputStyle, cursor: "pointer" }}
               required
               disabled={destinationsLoading}
             >
-              {destinationsLoading ? (
-                <option value="" disabled>Loading destinations...</option>
-              ) : destinationsError ? (
-                <option value="" disabled>Error loading destinations</option>
-              ) : destinations.length === 0 ? (
-                <option value="" disabled>No destinations available</option>
-              ) : (
-                <option value="" disabled>Select a destination</option>
-              )}
+              <option value="" disabled>
+                {destinations.length === 0 ? "No destinations available" : "Select a destination"}
+              </option>
               {destinations.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name} ({d.region})
                 </option>
               ))}
             </select>
-            {destinationsLoading && (
-              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 6 }}>
-                <RefreshCw size={12} className="animate-spin" /> Loading destinations...
-              </p>
-            )}
-            {destinationsError && (
-              <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: 4 }}>
-                {destinationsError}. Please try again later.
+            {destinations.length === 0 && (
+              <p style={{ fontSize: "0.75rem", color: "#B99A65", margin: "6px 0 0" }}>
+                No destinations loaded yet. Make sure Supabase env vars are configured in .env.local.
               </p>
             )}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6 }}>
-                Trip Starts *
-              </label>
+              <label htmlFor="modal-group-starts-at" style={labelStyle}>Trip Starts *</label>
               <input
+                id="modal-group-starts-at"
+                name="starts_at"
                 type="datetime-local"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
                 required
-                className="input-field"
-                style={{ width: "100%", fontSize: "0.8rem" }}
+                style={{ ...inputStyle, fontSize: "0.8rem" }}
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6 }}>
-                Trip Ends *
-              </label>
+              <label htmlFor="modal-group-ends-at" style={labelStyle}>Trip Ends *</label>
               <input
+                id="modal-group-ends-at"
+                name="ends_at"
                 type="datetime-local"
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
                 required
-                className="input-field"
-                style={{ width: "100%", fontSize: "0.8rem" }}
+                style={{ ...inputStyle, fontSize: "0.8rem" }}
               />
             </div>
           </div>
@@ -328,40 +345,63 @@ export default function CreateGroupModal({
           <div
             style={{
               padding: 12,
-              background: "rgba(16, 185, 129, 0.08)",
-              border: "1px solid rgba(16, 185, 129, 0.2)",
-              borderRadius: 8,
+              background: "rgba(0, 201, 167, 0.08)",
+              border: "1px solid rgba(0, 201, 167, 0.25)",
+              borderRadius: 10,
               fontSize: "0.78rem",
-              color: "#34d399",
-              lineHeight: 1.4,
+              color: "#7ee8d6",
+              lineHeight: 1.45,
               display: "flex",
               alignItems: "flex-start",
               gap: 8,
             }}
           >
-            <Shield size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            <Shield size={16} style={{ flexShrink: 0, marginTop: 2, color: "#00C9A7" }} />
             <div>
-              <strong>Bounded Privacy:</strong> Location sharing is strictly opt-in and visible only to accepted members of this group during the active trip window. Records automatically purge after the trip ends.
+              <strong>Bounded Privacy:</strong> Location sharing is strictly opt-in and visible
+              only to accepted members during the active trip window. Records automatically purge
+              after the trip ends.
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+          <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="btn-secondary"
-              style={{ flex: 1, padding: "10px 0" }}
+              style={{
+                flex: 1,
+                height: 40,
+                borderRadius: 999,
+                background: "var(--hover)",
+                border: "1px solid var(--line)",
+                color: "var(--soft)",
+                fontFamily: "inherit",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary"
-              style={{ flex: 2, padding: "10px 0" }}
+              style={{
+                flex: 2,
+                height: 40,
+                borderRadius: 999,
+                background: "#fff",
+                border: "none",
+                color: "#0b0f12",
+                fontFamily: "inherit",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.7 : 1,
+              }}
             >
-              {loading ? "Creating Group..." : "Create Travel Group"}
+              {loading ? "Creating Group…" : "Create Travel Group"}
             </button>
           </div>
         </form>
@@ -369,4 +409,3 @@ export default function CreateGroupModal({
     </div>
   );
 }
-
