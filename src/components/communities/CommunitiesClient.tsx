@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -8,9 +8,8 @@ import {
   Plus,
   MessageCircle,
   MapPin,
-  CheckCircle,
-  Shield,
-  UserCheck,
+  ArrowRight,
+  Compass,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Destination, Profile } from "@/types/database";
@@ -35,6 +34,14 @@ interface CommunitiesClientProps {
   profile: Profile | null;
 }
 
+const panelStyle: React.CSSProperties = {
+  background: "var(--panel)",
+  border: "1px solid var(--line)",
+  borderRadius: 16,
+  backdropFilter: "blur(22px) saturate(140%)",
+  WebkitBackdropFilter: "blur(22px) saturate(140%)",
+};
+
 export default function CommunitiesClient({
   initialDestinations,
   profile,
@@ -47,7 +54,7 @@ export default function CommunitiesClient({
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
 
-  const fetchCommunities = async () => {
+  const fetchCommunities = useCallback(async () => {
     setLoading(true);
     try {
       let url = "/api/communities";
@@ -71,11 +78,11 @@ export default function CommunitiesClient({
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDestinationId, searchQuery]);
 
   useEffect(() => {
     fetchCommunities();
-  }, [selectedDestinationId, searchQuery]);
+  }, [fetchCommunities]);
 
   // Join Community handler
   const handleJoin = async (communityId: string) => {
@@ -113,216 +120,576 @@ export default function CommunitiesClient({
     }
   };
 
+  const activeDestName =
+    selectedDestinationId === "all"
+      ? null
+      : destinations.find((d) => d.id === selectedDestinationId)?.name || null;
+
   return (
-    <div className="content-container" style={{ paddingTop: 16, paddingBottom: 60 }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-        <div>
-          <span
-            className="badge"
-            style={{
-              background: "rgba(168,85,247,0.15)",
-              color: "#c084fc",
-              border: "1px solid rgba(168,85,247,0.3)",
-              marginBottom: 6,
-            }}
-          >
-            Verified Travel Hubs
-          </span>
-          <h1 className="font-display" style={{ fontSize: "1.7rem", fontWeight: 700 }}>
-            Travel Communities
-          </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginTop: 2 }}>
-            Connect with travellers visiting the same heritage destination.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setCreateModalOpen(true)}
-          className="btn btn-primary btn-sm"
-          style={{
-            background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            boxShadow: "0 4px 16px rgba(168,85,247,0.3)",
-          }}
-        >
-          <Plus size={15} /> Create
-        </button>
-      </div>
-
-      {/* Search & Filter Bar */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-        <div style={{ position: "relative" }}>
-          <Search
-            size={16}
-            style={{
-              position: "absolute",
-              left: 14,
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-            }}
-          />
-          <input
-            className="input"
-            placeholder="Search communities by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ paddingLeft: 42 }}
-          />
-        </div>
-
-        {/* Destination Pills */}
+    <div
+      style={{
+        minHeight: "calc(100dvh - 76px)",
+        background: "var(--ink)",
+        color: "var(--text)",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1040,
+          margin: "0 auto",
+          padding: "36px clamp(20px, 3.4vw, 48px) 96px",
+        }}
+      >
+        {/* Header Bar */}
         <div
           style={{
             display: "flex",
-            gap: 6,
-            overflowX: "auto",
-            paddingBottom: 4,
-            scrollbarWidth: "none",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            marginBottom: 28,
+            paddingBottom: 24,
+            borderBottom: "1px solid var(--line)",
+            flexWrap: "wrap",
+            gap: 16,
           }}
         >
-          <button
-            onClick={() => setSelectedDestinationId("all")}
-            className={`chip ${selectedDestinationId === "all" ? "active" : ""}`}
-            style={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}
-          >
-            All Destinations
-          </button>
-          {destinations.map((d) => (
-            <button
-              key={d.id}
-              onClick={() => setSelectedDestinationId(d.id)}
-              className={`chip ${selectedDestinationId === d.id ? "active" : ""}`}
-              style={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}
-            >
-              📍 {d.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Community Cards List */}
-      {loading ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="card skeleton" style={{ height: 110, borderRadius: 14 }} />
-          ))}
-        </div>
-      ) : communities.length === 0 ? (
-        <div className="card" style={{ padding: "48px 20px", textAlign: "center" }}>
-          <Users size={36} style={{ color: "#a855f7", margin: "0 auto 12px" }} />
-          <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 6 }}>
-            No communities found
-          </h3>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", maxWidth: 300, margin: "0 auto 16px" }}>
-            Create the first community for this destination to coordinate trips and share tips!
-          </p>
-          <button
-            onClick={() => setCreateModalOpen(true)}
-            className="btn btn-primary btn-sm"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
-          >
-            Create Community
-          </button>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {communities.map((c) => (
-            <div
-              key={c.id}
-              className="card"
+          <div>
+            <span
               style={{
-                padding: "16px 18px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-                border: c.is_member ? "1px solid rgba(168,85,247,0.3)" : "1px solid var(--border)",
-                background: c.is_member ? "rgba(168,85,247,0.04)" : "var(--bg-card)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: "0.7rem",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "#00C9A7",
+                background: "rgba(0, 201, 167, 0.1)",
+                border: "1px solid rgba(0, 201, 167, 0.3)",
+                borderRadius: 999,
+                padding: "4px 12px",
+                marginBottom: 10,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+              <Users size={12} />
+              Verified Travel Hubs
+            </span>
+            <h1
+              style={{
+                fontFamily: "inherit",
+                fontSize: "clamp(1.6rem, 3.2vw, 2.1rem)",
+                fontWeight: 500,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
+                margin: "0 0 6px 0",
+                color: "var(--text)",
+              }}
+            >
+              Travel Communities
+            </h1>
+            <p style={{ fontSize: "0.9375rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
+              Connect with verified travellers exploring the same heritage destination and launch group trips together.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <Link
+              href="/groups"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                height: 38,
+                padding: "0 16px",
+                borderRadius: 999,
+                background: "var(--hover)",
+                border: "1px solid var(--line)",
+                color: "var(--soft)",
+                fontSize: "0.84rem",
+                fontWeight: 500,
+                textDecoration: "none",
+              }}
+            >
+              <Compass size={14} style={{ color: "#B99A65" }} />
+              Travel Groups
+            </Link>
+
+            <button
+              onClick={() => setCreateModalOpen(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                height: 38,
+                padding: "0 18px",
+                borderRadius: 999,
+                background: "#fff",
+                color: "#0b0f12",
+                border: "none",
+                fontFamily: "inherit",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+            >
+              <Plus size={15} />
+              Create Community
+            </button>
+          </div>
+        </div>
+
+        {/* Search & Destination Filter Bar */}
+        <div
+          style={{
+            ...panelStyle,
+            padding: 16,
+            marginBottom: 24,
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+          }}
+        >
+          <div style={{ position: "relative" }}>
+            <Search
+              size={16}
+              style={{
+                position: "absolute",
+                left: 14,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--muted)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              id="communities-search"
+              aria-label="Search communities by name"
+              placeholder="Search communities by name…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                height: 44,
+                background: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid var(--line)",
+                borderRadius: 10,
+                color: "var(--text)",
+                padding: "0 14px 0 42px",
+                fontSize: "0.875rem",
+                fontFamily: "inherit",
+                outline: "none",
+              }}
+            />
+          </div>
+
+          {/* Destination Filter Pills */}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              overflowX: "auto",
+              paddingBottom: 2,
+              scrollbarWidth: "none",
+            }}
+          >
+            <button
+              onClick={() => setSelectedDestinationId("all")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                height: 32,
+                padding: "0 14px",
+                borderRadius: 999,
+                fontFamily: "inherit",
+                fontSize: "0.8rem",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+                cursor: "pointer",
+                transition: "background 0.2s ease, color 0.2s ease, border-color 0.2s ease",
+                background: selectedDestinationId === "all" ? "#fff" : "var(--hover)",
+                color: selectedDestinationId === "all" ? "#0b0f12" : "var(--soft)",
+                border:
+                  selectedDestinationId === "all"
+                    ? "1px solid #fff"
+                    : "1px solid var(--line)",
+              }}
+            >
+              All Destinations
+            </button>
+
+            {destinations.map((d) => {
+              const isActive = selectedDestinationId === d.id;
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => setSelectedDestinationId(d.id)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    height: 32,
+                    padding: "0 14px",
+                    borderRadius: 999,
+                    fontFamily: "inherit",
+                    fontSize: "0.8rem",
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                    transition: "background 0.2s ease, color 0.2s ease, border-color 0.2s ease",
+                    background: isActive ? "#fff" : "var(--hover)",
+                    color: isActive ? "#0b0f12" : "var(--soft)",
+                    border: isActive ? "1px solid #fff" : "1px solid var(--line)",
+                  }}
+                >
+                  <MapPin size={12} style={{ color: isActive ? "#0b0f12" : "#B99A65" }} />
+                  {d.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Community Cards Grid */}
+        {loading ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
+              gap: 16,
+            }}
+          >
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                style={{
+                  ...panelStyle,
+                  height: 170,
+                  opacity: 0.6,
+                }}
+              />
+            ))}
+          </div>
+        ) : communities.length === 0 ? (
+          <div
+            style={{
+              ...panelStyle,
+              padding: "56px 24px",
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 14,
+                background: "rgba(0, 201, 167, 0.1)",
+                border: "1px solid rgba(0, 201, 167, 0.28)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#00C9A7",
+                marginBottom: 16,
+              }}
+            >
+              <Users size={26} />
+            </div>
+
+            <h2
+              style={{
+                fontFamily: "inherit",
+                fontSize: "1.15rem",
+                fontWeight: 500,
+                margin: "0 0 8px 0",
+                color: "var(--text)",
+              }}
+            >
+              {activeDestName
+                ? `No communities in ${activeDestName} yet`
+                : searchQuery.trim()
+                ? "No matching communities found"
+                : "No communities yet"}
+            </h2>
+            <p
+              style={{
+                color: "var(--muted)",
+                fontSize: "0.875rem",
+                maxWidth: 420,
+                margin: "0 0 22px 0",
+                lineHeight: 1.55,
+              }}
+            >
+              Start the first destination room to share local tips, ask questions, and organize live
+              group trips with fellow verified travellers.
+            </p>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+              {(searchQuery.trim() || selectedDestinationId !== "all") && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedDestinationId("all");
+                  }}
+                  style={{
+                    height: 38,
+                    padding: "0 18px",
+                    borderRadius: 999,
+                    background: "var(--hover)",
+                    border: "1px solid var(--line)",
+                    color: "var(--soft)",
+                    fontFamily: "inherit",
+                    fontSize: "0.84rem",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  Clear Filters
+                </button>
+              )}
+
+              <button
+                onClick={() => setCreateModalOpen(true)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  height: 38,
+                  padding: "0 20px",
+                  borderRadius: 999,
+                  background: "#fff",
+                  border: "none",
+                  color: "#0b0f12",
+                  fontFamily: "inherit",
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus size={15} />
+                {activeDestName ? `Create ${activeDestName} Community` : "Create Community"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
+              gap: 16,
+            }}
+          >
+            {communities.map((c) => (
+              <div
+                key={c.id}
+                style={{
+                  ...panelStyle,
+                  padding: 20,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  borderColor: c.is_member ? "rgba(0, 201, 167, 0.35)" : "var(--line)",
+                  background: c.is_member
+                    ? "linear-gradient(145deg, rgba(0, 201, 167, 0.08) 0%, rgba(14, 19, 23, 0.9) 100%)"
+                    : "var(--panel)",
+                }}
+              >
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                    <span className="badge badge-teal" style={{ fontSize: "0.7rem" }}>
-                      📍 {c.destinations?.name || "India"}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      flexWrap: "wrap",
+                      marginBottom: 10,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        fontSize: "0.72rem",
+                        fontWeight: 500,
+                        padding: "3px 10px",
+                        borderRadius: 999,
+                        background: "var(--hover)",
+                        border: "1px solid var(--line)",
+                        color: "var(--soft)",
+                      }}
+                    >
+                      <MapPin size={11} style={{ color: "#B99A65" }} />
+                      {c.destinations?.name || "India"}
                     </span>
-                    {c.is_owner && <span className="badge badge-gold" style={{ fontSize: "0.7rem" }}>Owner</span>}
+
+                    {c.is_owner && (
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 600,
+                          padding: "3px 9px",
+                          borderRadius: 999,
+                          background: "rgba(185, 154, 101, 0.14)",
+                          border: "1px solid rgba(185, 154, 101, 0.35)",
+                          color: "#B99A65",
+                        }}
+                      >
+                        Owner
+                      </span>
+                    )}
+
                     {c.is_member && !c.is_owner && (
-                      <span className="badge badge-success" style={{ fontSize: "0.7rem" }}>
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 600,
+                          padding: "3px 9px",
+                          borderRadius: 999,
+                          background: "rgba(0, 201, 167, 0.12)",
+                          border: "1px solid rgba(0, 201, 167, 0.35)",
+                          color: "#00C9A7",
+                        }}
+                      >
                         Member
                       </span>
                     )}
                   </div>
-                  <h3 style={{ fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.3 }}>
+
+                  <h3
+                    style={{
+                      fontFamily: "inherit",
+                      fontSize: "1.075rem",
+                      fontWeight: 500,
+                      lineHeight: 1.3,
+                      margin: 0,
+                      color: "var(--text)",
+                    }}
+                  >
                     {c.name}
                   </h3>
+
                   {c.description && (
-                    <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginTop: 4, lineHeight: 1.45 }}>
+                    <p
+                      style={{
+                        fontSize: "0.84rem",
+                        color: "var(--muted)",
+                        marginTop: 8,
+                        marginBottom: 0,
+                        lineHeight: 1.5,
+                      }}
+                    >
                       {c.description}
                     </p>
                   )}
                 </div>
-              </div>
 
-              {/* Footer bar */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  paddingTop: 8,
-                  borderTop: "1px solid var(--border-soft)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                  <Users size={14} />
-                  <span>{c.member_count} {c.member_count === 1 ? "member" : "members"}</span>
-                  <span>· Created by {c.profiles?.display_name || "Traveller"}</span>
-                </div>
-
-                {c.is_member ? (
-                  <Link href={`/communities/${c.id}`} style={{ textDecoration: "none" }}>
-                    <button
-                      className="btn btn-primary btn-sm"
+                {/* Footer bar */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 10,
+                    paddingTop: 12,
+                    borderTop: "1px solid var(--line)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: "0.78rem",
+                      color: "var(--muted)",
+                      minWidth: 0,
+                    }}
+                  >
+                    <Users size={13} style={{ flexShrink: 0 }} />
+                    <span style={{ whiteSpace: "nowrap" }}>
+                      {c.member_count} {c.member_count === 1 ? "member" : "members"}
+                    </span>
+                    <span
                       style={{
-                        background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-                        padding: "6px 14px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      <MessageCircle size={14} /> Open Chat
+                      · {c.profiles?.display_name || "Traveller"}
+                    </span>
+                  </div>
+
+                  {c.is_member ? (
+                    <Link
+                      href={`/communities/${c.id}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        height: 34,
+                        padding: "0 14px",
+                        borderRadius: 999,
+                        background: "#fff",
+                        color: "#0b0f12",
+                        fontSize: "0.8rem",
+                        fontWeight: 500,
+                        textDecoration: "none",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <MessageCircle size={13} /> Open Chat
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => handleJoin(c.id)}
+                      disabled={joiningId === c.id}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                        height: 34,
+                        padding: "0 14px",
+                        borderRadius: 999,
+                        background: "var(--hover)",
+                        border: "1px solid var(--line)",
+                        color: "var(--text)",
+                        fontFamily: "inherit",
+                        fontSize: "0.8rem",
+                        fontWeight: 500,
+                        cursor: joiningId === c.id ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {joiningId === c.id ? (
+                        "Joining…"
+                      ) : (
+                        <>
+                          Join <ArrowRight size={13} />
+                        </>
+                      )}
                     </button>
-                  </Link>
-                ) : (
-                  <button
-                    onClick={() => handleJoin(c.id)}
-                    disabled={joiningId === c.id}
-                    className="btn btn-secondary btn-sm"
-                    style={{ padding: "6px 14px" }}
-                  >
-                    {joiningId === c.id ? "Joining…" : "Join Community"}
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Create Community Modal */}
       <CreateCommunityModal
         destinations={destinations}
         profile={profile}
         isOpen={createModalOpen}
+        defaultDestinationId={selectedDestinationId !== "all" ? selectedDestinationId : undefined}
         onClose={() => setCreateModalOpen(false)}
         onCreated={() => fetchCommunities()}
       />
     </div>
   );
 }
-

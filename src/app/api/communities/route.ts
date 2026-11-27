@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     let query = supabase
       .from("communities")
-      .select("*, destinations(id, name, region), profiles(id, display_name, avatar_url)")
+      .select("*, destinations(id, name, region), profiles!communities_owner_id_fkey(id, display_name, avatar_url)")
       .order("created_at", { ascending: false });
 
     if (destinationId) {

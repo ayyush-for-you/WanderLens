@@ -6,14 +6,10 @@ import { useRouter } from "next/navigation";
 import {
   Send,
   Users,
-  MoreVertical,
   Flag,
   UserX,
   ArrowLeft,
-  Shield,
-  AlertCircle,
   MapPin,
-  Clock,
   Sparkles,
   X,
 } from "lucide-react";
@@ -29,6 +25,13 @@ interface CommunityChatClientProps {
   profile: Profile | null;
 }
 
+const panelStyle: React.CSSProperties = {
+  background: "var(--panel)",
+  border: "1px solid var(--line)",
+  backdropFilter: "blur(22px) saturate(140%)",
+  WebkitBackdropFilter: "blur(22px) saturate(140%)",
+};
+
 export default function CommunityChatClient({
   communityId,
   initialCommunity,
@@ -36,9 +39,9 @@ export default function CommunityChatClient({
   initialMembers,
   profile,
 }: CommunityChatClientProps) {
-  const [community, setCommunity] = useState(initialCommunity);
+  const [community] = useState(initialCommunity);
   const [messages, setMessages] = useState<any[]>(initialMessages);
-  const [members, setMembers] = useState<any[]>(initialMembers);
+  const [members] = useState<any[]>(initialMembers);
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
 
@@ -46,7 +49,10 @@ export default function CommunityChatClient({
   const [membersDrawerOpen, setMembersDrawerOpen] = useState(false);
   const [reportingMessageId, setReportingMessageId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("");
-  const [selectedUserToBlock, setSelectedUserToBlock] = useState<{ id: string; name: string } | null>(null);
+  const [selectedUserToBlock, setSelectedUserToBlock] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Rate limiting tracker
   const [recentSends, setRecentSends] = useState<number[]>([]);
@@ -55,7 +61,6 @@ export default function CommunityChatClient({
   const supabase = createClient();
   const router = useRouter();
 
-  // Scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -78,17 +83,13 @@ export default function CommunityChatClient({
         },
         async (payload) => {
           const newMsg = payload.new;
-          // Fetch sender profile if not already included
           const { data: senderProfile } = await supabase
             .from("profiles")
             .select("id, display_name, avatar_url, role")
             .eq("id", newMsg.user_id)
             .single();
 
-          setMessages((prev) => [
-            ...prev,
-            { ...newMsg, profiles: senderProfile },
-          ]);
+          setMessages((prev) => [...prev, { ...newMsg, profiles: senderProfile }]);
         }
       )
       .subscribe();
@@ -113,7 +114,6 @@ export default function CommunityChatClient({
       return;
     }
 
-    // Client-side rate limit check (20 per minute)
     const now = Date.now();
     const oneMinAgo = now - 60 * 1000;
     const windowSends = recentSends.filter((t) => t > oneMinAgo);
@@ -157,20 +157,19 @@ export default function CommunityChatClient({
       });
 
       if (res.ok) {
-        toast.success(`Blocked ${selectedUserToBlock.name}. Their messages are now hidden.`);
-        // Instantly hide their messages in client
+        toast.success(`Blocked ${selectedUserToBlock.name}. Their messages are hidden.`);
         setMessages((prev) => prev.filter((m) => m.user_id !== selectedUserToBlock.id));
         setSelectedUserToBlock(null);
       } else {
         const err = await res.json();
-        toast.error(err.error || "Failed to block user");
+        toast.error(err.error || "Could not block user");
       }
     } catch {
-      toast.error("Block action failed");
+      toast.error("Network error blocking user");
     }
   };
 
-  // Report message
+  // Report a message
   const handleReportMessage = async () => {
     if (!reportingMessageId || !reportReason.trim()) return;
     try {
@@ -185,15 +184,15 @@ export default function CommunityChatClient({
       });
 
       if (res.ok) {
-        toast.success("Message reported to moderators");
+        toast.success("Message reported to moderators.");
         setReportingMessageId(null);
         setReportReason("");
       } else {
         const err = await res.json();
-        toast.error(err.error || "Report failed");
+        toast.error(err.error || "Failed to submit report");
       }
     } catch {
-      toast.error("Failed to submit report");
+      toast.error("Network error");
     }
   };
 
@@ -219,227 +218,339 @@ export default function CommunityChatClient({
   const isOwner = profile?.id === community?.owner_id;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "calc(100dvh - 120px)",
-        maxWidth: 720,
-        margin: "0 auto",
-      }}
-    >
-      {/* ── Chatroom Header ─────────────────────────────────────── */}
+    <div style={{ background: "var(--ink)", color: "var(--text)", minHeight: "calc(100dvh - 76px)" }}>
       <div
-        className="card"
         style={{
-          padding: "12px 16px",
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          borderRadius: "0 0 14px 14px",
-          borderTop: "none",
-          borderLeft: "none",
-          borderRight: "none",
-          background: "rgba(20,18,16,0.9)",
-          backdropFilter: "blur(8px)",
-          zIndex: 10,
+          flexDirection: "column",
+          height: "calc(100dvh - 76px)",
+          maxWidth: 820,
+          margin: "0 auto",
+          borderLeft: "1px solid var(--line)",
+          borderRight: "1px solid var(--line)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link href="/communities" className="btn btn-secondary btn-sm btn-icon">
-            <ArrowLeft size={16} />
-          </Link>
-          <div>
-            <h2 style={{ fontSize: "1rem", fontWeight: 700, lineHeight: 1.2 }}>
-              {community?.name}
-            </h2>
-            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-              📍 {community?.destinations?.name || "Destination"} · {members.length} members
-            </p>
+        {/* ── Chatroom Header ─────────────────────────────────────── */}
+        <div
+          style={{
+            ...panelStyle,
+            borderTop: "none",
+            borderLeft: "none",
+            borderRight: "none",
+            padding: "14px 18px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+            zIndex: 10,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+            <Link
+              href="/communities"
+              aria-label="Back to communities"
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                background: "var(--hover)",
+                border: "1px solid var(--line)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--soft)",
+                textDecoration: "none",
+                flexShrink: 0,
+              }}
+            >
+              <ArrowLeft size={16} />
+            </Link>
+            <div style={{ minWidth: 0 }}>
+              <h1
+                style={{
+                  fontFamily: "inherit",
+                  fontSize: "1.05rem",
+                  fontWeight: 500,
+                  lineHeight: 1.25,
+                  margin: 0,
+                  color: "var(--text)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {community?.name}
+              </h1>
+              <p
+                style={{
+                  fontSize: "0.78rem",
+                  color: "var(--muted)",
+                  margin: "2px 0 0",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <MapPin size={12} style={{ color: "#B99A65" }} />
+                <span>{community?.destinations?.name || "Destination"}</span>
+                <span>·</span>
+                <span>{members.length} members</span>
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            {isOwner && (
+              <Link
+                href={`/groups/new?community_id=${communityId}`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  height: 34,
+                  padding: "0 14px",
+                  borderRadius: 999,
+                  background: "rgba(0, 201, 167, 0.12)",
+                  border: "1px solid rgba(0, 201, 167, 0.35)",
+                  color: "#00C9A7",
+                  fontSize: "0.78rem",
+                  fontWeight: 500,
+                  textDecoration: "none",
+                }}
+                title="Convert this community to a travel group with live location sharing"
+              >
+                <Sparkles size={13} /> Group Mode
+              </Link>
+            )}
+
+            <button
+              onClick={() => setMembersDrawerOpen(true)}
+              aria-label="View members"
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                background: "var(--hover)",
+                border: "1px solid var(--line)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--soft)",
+                cursor: "pointer",
+              }}
+              title="View Members"
+            >
+              <Users size={15} />
+            </button>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {isOwner && (
-            <Link href={`/groups/new?community_id=${communityId}`}>
-              <button
-                className="btn btn-primary btn-sm"
-                style={{ fontSize: "0.75rem", padding: "6px 10px", gap: 4 }}
-                title="Convert this community to a travel group with live location sharing (Phase 5)"
-              >
-                <Sparkles size={13} /> Group Mode
-              </button>
-            </Link>
-          )}
-
-          <button
-            onClick={() => setMembersDrawerOpen(true)}
-            className="btn btn-secondary btn-sm btn-icon"
-            title="View Members"
-          >
-            <Users size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* ── Messages Feed ───────────────────────────────────────── */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "16px 12px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
-        {/* Welcome Banner */}
+        {/* ── Messages Feed ───────────────────────────────────────── */}
         <div
-          className="card"
           style={{
-            padding: "14px",
-            textAlign: "center",
-            background: "rgba(168,85,247,0.05)",
-            border: "1px dashed rgba(168,85,247,0.25)",
-            marginBottom: 8,
+            flex: 1,
+            overflowY: "auto",
+            padding: "18px 18px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
           }}
         >
-          <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-            Welcome to <strong>{community?.name}</strong>! This is an authentic space to coordinate plans, ask for local advice, and connect safely with verified travellers.
-          </p>
-        </div>
+          {/* Welcome Banner */}
+          <div
+            style={{
+              padding: "14px 16px",
+              textAlign: "center",
+              background: "rgba(0, 201, 167, 0.06)",
+              border: "1px dashed rgba(0, 201, 167, 0.25)",
+              borderRadius: 12,
+              marginBottom: 6,
+            }}
+          >
+            <p style={{ fontSize: "0.82rem", color: "var(--soft)", margin: 0, lineHeight: 1.5 }}>
+              Welcome to <strong>{community?.name}</strong>. Coordinate plans, ask for local advice,
+              and connect safely with verified travellers.
+            </p>
+          </div>
 
-        {messages.map((msg) => {
-          const isMe = msg.user_id === profile?.id;
+          {messages.map((msg) => {
+            const isMe = msg.user_id === profile?.id;
 
-          return (
-            <div
-              key={msg.id}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: isMe ? "flex-end" : "flex-start",
-                gap: 2,
-              }}
-            >
-              {/* Sender label */}
-              {!isMe && (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, paddingLeft: 4 }}>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--accent-teal)" }}>
-                    {msg.profiles?.display_name || "Traveller"}
-                  </span>
-                  {msg.profiles?.role === "admin" && (
-                    <span className="badge badge-gold" style={{ fontSize: "0.6rem", padding: "1px 5px" }}>
-                      Admin
-                    </span>
-                  )}
-                  {msg.profiles?.role === "moderator" && (
-                    <span className="badge badge-teal" style={{ fontSize: "0.6rem", padding: "1px 5px" }}>
-                      Mod
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Bubble */}
+            return (
               <div
+                key={msg.id}
                 style={{
-                  position: "relative",
-                  maxWidth: "82%",
-                  padding: "10px 14px",
-                  borderRadius: isMe ? "14px 14px 2px 14px" : "14px 14px 14px 2px",
-                  background: isMe
-                    ? "linear-gradient(135deg, #7c3aed, #9333ea)"
-                    : "#221f1c",
-                  color: isMe ? "#fff" : "var(--text-primary)",
-                  border: isMe ? "none" : "1px solid var(--border-soft)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-                  wordBreak: "break-word",
-                  lineHeight: 1.45,
-                  fontSize: "0.9rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: isMe ? "flex-end" : "flex-start",
+                  gap: 3,
                 }}
               >
-                {msg.body}
+                {!isMe && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, paddingLeft: 4 }}>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#00C9A7" }}>
+                      {msg.profiles?.display_name || "Traveller"}
+                    </span>
+                    {msg.profiles?.role === "admin" && (
+                      <span
+                        style={{
+                          fontSize: "0.62rem",
+                          fontWeight: 600,
+                          padding: "1px 6px",
+                          borderRadius: 999,
+                          background: "rgba(185, 154, 101, 0.14)",
+                          border: "1px solid rgba(185, 154, 101, 0.35)",
+                          color: "#B99A65",
+                        }}
+                      >
+                        Admin
+                      </span>
+                    )}
+                    {msg.profiles?.role === "moderator" && (
+                      <span
+                        style={{
+                          fontSize: "0.62rem",
+                          fontWeight: 600,
+                          padding: "1px 6px",
+                          borderRadius: 999,
+                          background: "rgba(0, 201, 167, 0.12)",
+                          border: "1px solid rgba(0, 201, 167, 0.35)",
+                          color: "#00C9A7",
+                        }}
+                      >
+                        Mod
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "flex-end",
-                    gap: 6,
-                    marginTop: 4,
-                    fontSize: "0.675rem",
-                    color: isMe ? "rgba(255,255,255,0.7)" : "var(--text-muted)",
+                    position: "relative",
+                    maxWidth: "82%",
+                    padding: "10px 14px",
+                    borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                    background: isMe ? "rgba(0, 201, 167, 0.14)" : "var(--panel)",
+                    color: "var(--text)",
+                    border: isMe
+                      ? "1px solid rgba(0, 201, 167, 0.32)"
+                      : "1px solid var(--line)",
+                    wordBreak: "break-word",
+                    lineHeight: 1.48,
+                    fontSize: "0.9rem",
                   }}
                 >
-                  <span>
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
+                  {msg.body}
 
-                  {!isMe && (
-                    <button
-                      onClick={() => setReportingMessageId(msg.id)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "inherit",
-                        cursor: "pointer",
-                        padding: 0,
-                        opacity: 0.7,
-                      }}
-                      title="Report message"
-                    >
-                      <Flag size={11} />
-                    </button>
-                  )}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      gap: 6,
+                      marginTop: 4,
+                      fontSize: "0.68rem",
+                      color: "var(--muted)",
+                    }}
+                  >
+                    <span>
+                      {new Date(msg.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+
+                    {!isMe && (
+                      <button
+                        onClick={() => setReportingMessageId(msg.id)}
+                        aria-label="Report message"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "inherit",
+                          cursor: "pointer",
+                          padding: 0,
+                          opacity: 0.75,
+                          display: "inline-flex",
+                        }}
+                        title="Report message"
+                      >
+                        <Flag size={11} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
 
-        <div ref={messagesEndRef} />
-      </div>
+          <div ref={messagesEndRef} />
+        </div>
 
-      {/* ── Composer Bar ────────────────────────────────────────── */}
-      <form
-        onSubmit={handleSendMessage}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "10px 14px",
-          background: "#181512",
-          borderTop: "1px solid var(--border)",
-        }}
-      >
-        <input
-          className="input"
-          placeholder={
-            profile?.is_verified
-              ? "Type message to community..."
-              : "Verify email to send messages"
-          }
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          disabled={isSending || !profile?.is_verified}
-          maxLength={2000}
-          style={{ flex: 1, minHeight: 42, fontSize: "0.9rem" }}
-        />
-        <button
-          type="submit"
-          disabled={isSending || !inputText.trim() || !profile?.is_verified}
-          className="btn btn-primary btn-icon"
+        {/* ── Composer Bar ────────────────────────────────────────── */}
+        <form
+          onSubmit={handleSendMessage}
           style={{
-            width: 42,
-            height: 42,
-            borderRadius: 10,
-            background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+            ...panelStyle,
+            borderLeft: "none",
+            borderRight: "none",
+            borderBottom: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "12px 16px",
           }}
         >
-          <Send size={16} />
-        </button>
-      </form>
+          <input
+            aria-label="Message input"
+            placeholder={
+              profile?.is_verified
+                ? "Type message to community…"
+                : "Verify email to send messages"
+            }
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            disabled={isSending || !profile?.is_verified}
+            maxLength={2000}
+            style={{
+              flex: 1,
+              height: 42,
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid var(--line)",
+              borderRadius: 999,
+              color: "var(--text)",
+              padding: "0 16px",
+              fontSize: "0.875rem",
+              fontFamily: "inherit",
+              outline: "none",
+            }}
+          />
+          <button
+            type="submit"
+            disabled={isSending || !inputText.trim() || !profile?.is_verified}
+            aria-label="Send message"
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              background: "#fff",
+              border: "none",
+              color: "#0b0f12",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor:
+                isSending || !inputText.trim() || !profile?.is_verified
+                  ? "not-allowed"
+                  : "pointer",
+              opacity: isSending || !inputText.trim() || !profile?.is_verified ? 0.45 : 1,
+              flexShrink: 0,
+            }}
+          >
+            <Send size={16} />
+          </button>
+        </form>
+      </div>
 
       {/* ── Members Drawer Modal ────────────────────────────────── */}
       {membersDrawerOpen && (
@@ -448,28 +559,62 @@ export default function CommunityChatClient({
             position: "fixed",
             inset: 0,
             zIndex: 100,
-            background: "rgba(0,0,0,0.75)",
-            backdropFilter: "blur(4px)",
+            background: "rgba(6, 10, 12, 0.78)",
+            backdropFilter: "blur(8px)",
             display: "flex",
             justifyContent: "flex-end",
           }}
         >
           <div
-            className="animate-fade-in"
             style={{
               width: "100%",
               maxWidth: 360,
               height: "100%",
-              background: "var(--bg-card)",
-              borderLeft: "1px solid var(--border)",
+              background: "var(--panel)",
+              backdropFilter: "blur(22px) saturate(140%)",
+              WebkitBackdropFilter: "blur(22px) saturate(140%)",
+              borderLeft: "1px solid var(--line)",
               padding: 20,
               display: "flex",
               flexDirection: "column",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Community Members</h3>
-              <button onClick={() => setMembersDrawerOpen(false)} className="btn btn-secondary btn-sm btn-icon">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 16,
+                paddingBottom: 12,
+                borderBottom: "1px solid var(--line)",
+              }}
+            >
+              <h2
+                style={{
+                  fontFamily: "inherit",
+                  fontSize: "1.05rem",
+                  fontWeight: 500,
+                  margin: 0,
+                }}
+              >
+                Community Members ({members.length})
+              </h2>
+              <button
+                onClick={() => setMembersDrawerOpen(false)}
+                aria-label="Close members drawer"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  background: "var(--hover)",
+                  border: "1px solid var(--line)",
+                  color: "var(--soft)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
                 <X size={16} />
               </button>
             </div>
@@ -483,32 +628,33 @@ export default function CommunityChatClient({
                     justifyContent: "space-between",
                     alignItems: "center",
                     padding: "8px 10px",
-                    borderRadius: 8,
-                    background: "rgba(255,255,255,0.02)",
+                    borderRadius: 10,
+                    background: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid var(--line)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div
                       style={{
-                        width: 28,
-                        height: 28,
+                        width: 30,
+                        height: 30,
                         borderRadius: "50%",
-                        background: "var(--gradient-gold)",
+                        background: "linear-gradient(135deg, #B99A65 0%, #8f7242 100%)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: "0.75rem",
-                        fontWeight: 700,
-                        color: "#1a0800",
+                        fontWeight: 600,
+                        color: "#0b0f12",
                       }}
                     >
                       {m.profiles?.display_name?.charAt(0).toUpperCase() || "U"}
                     </div>
                     <div>
-                      <p style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                      <p style={{ fontSize: "0.85rem", fontWeight: 500, margin: 0 }}>
                         {m.profiles?.display_name || "Traveller"}
                       </p>
-                      <p style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                      <p style={{ fontSize: "0.72rem", color: "var(--muted)", margin: 0 }}>
                         {m.role === "owner" ? "Community Creator" : "Member"}
                       </p>
                     </div>
@@ -522,8 +668,21 @@ export default function CommunityChatClient({
                           name: m.profiles?.display_name || "this user",
                         })
                       }
-                      className="btn btn-danger btn-sm"
-                      style={{ fontSize: "0.7rem", padding: "4px 8px" }}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        height: 28,
+                        padding: "0 10px",
+                        borderRadius: 999,
+                        background: "rgba(220, 38, 38, 0.12)",
+                        border: "1px solid rgba(220, 38, 38, 0.35)",
+                        color: "#fca5a5",
+                        fontFamily: "inherit",
+                        fontSize: "0.72rem",
+                        fontWeight: 500,
+                        cursor: "pointer",
+                      }}
                       title="Block user"
                     >
                       <UserX size={12} /> Block
@@ -533,12 +692,22 @@ export default function CommunityChatClient({
               ))}
             </div>
 
-            {/* Leave Community option */}
             {!isOwner && (
               <button
                 onClick={handleLeave}
-                className="btn btn-secondary btn-sm"
-                style={{ marginTop: 16, width: "100%", color: "#f87171" }}
+                style={{
+                  marginTop: 16,
+                  width: "100%",
+                  height: 38,
+                  borderRadius: 999,
+                  background: "rgba(220, 38, 38, 0.1)",
+                  border: "1px solid rgba(220, 38, 38, 0.35)",
+                  color: "#fca5a5",
+                  fontFamily: "inherit",
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
               >
                 Leave Community
               </button>
@@ -554,25 +723,70 @@ export default function CommunityChatClient({
             position: "fixed",
             inset: 0,
             zIndex: 110,
-            background: "rgba(0,0,0,0.8)",
+            background: "rgba(6, 10, 12, 0.82)",
+            backdropFilter: "blur(6px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             padding: 16,
           }}
         >
-          <div className="card" style={{ maxWidth: 360, width: "100%", padding: 20 }}>
-            <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 6 }}>
+          <div
+            style={{
+              ...panelStyle,
+              borderRadius: 16,
+              maxWidth: 380,
+              width: "100%",
+              padding: 22,
+            }}
+          >
+            <h3 style={{ fontFamily: "inherit", fontSize: "1.05rem", fontWeight: 500, margin: "0 0 8px 0" }}>
               Block {selectedUserToBlock.name}?
             </h3>
-            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 16 }}>
-              Blocked users cannot DM or see each other&apos;s messages in shared spaces, and cannot be placed in the same travel group.
+            <p
+              style={{
+                fontSize: "0.84rem",
+                color: "var(--muted)",
+                lineHeight: 1.5,
+                margin: "0 0 18px 0",
+              }}
+            >
+              Blocked users cannot DM or see each other&apos;s messages in shared spaces, and
+              cannot be placed in the same travel group.
             </p>
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={handleBlockUser} className="btn btn-danger btn-sm" style={{ flex: 1 }}>
+              <button
+                onClick={handleBlockUser}
+                style={{
+                  flex: 1,
+                  height: 38,
+                  borderRadius: 999,
+                  background: "var(--danger)",
+                  border: "none",
+                  color: "#fff",
+                  fontFamily: "inherit",
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
                 Confirm Block
               </button>
-              <button onClick={() => setSelectedUserToBlock(null)} className="btn btn-secondary btn-sm">
+              <button
+                onClick={() => setSelectedUserToBlock(null)}
+                style={{
+                  flex: 1,
+                  height: 38,
+                  borderRadius: 999,
+                  background: "var(--hover)",
+                  border: "1px solid var(--line)",
+                  color: "var(--soft)",
+                  fontFamily: "inherit",
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
                 Cancel
               </button>
             </div>
@@ -587,39 +801,83 @@ export default function CommunityChatClient({
             position: "fixed",
             inset: 0,
             zIndex: 110,
-            background: "rgba(0,0,0,0.8)",
+            background: "rgba(6, 10, 12, 0.82)",
+            backdropFilter: "blur(6px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             padding: 16,
           }}
         >
-          <div className="card" style={{ maxWidth: 380, width: "100%", padding: 20 }}>
-            <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 6 }}>
+          <div
+            style={{
+              ...panelStyle,
+              borderRadius: 16,
+              maxWidth: 400,
+              width: "100%",
+              padding: 22,
+            }}
+          >
+            <h3 style={{ fontFamily: "inherit", fontSize: "1.05rem", fontWeight: 500, margin: "0 0 6px 0" }}>
               Report Message to Moderators
             </h3>
-            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 12 }}>
-              Please describe why this message violates WanderLens community standards.
+            <p style={{ fontSize: "0.82rem", color: "var(--muted)", margin: "0 0 12px 0" }}>
+              Describe why this message violates WanderLens community standards.
             </p>
             <textarea
-              className="input"
               rows={3}
-              placeholder="Harassment, spam, commercial advertising, unsafe behavior..."
+              placeholder="Harassment, spam, commercial advertising, unsafe behavior…"
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
               maxLength={500}
-              style={{ marginBottom: 12 }}
+              style={{
+                width: "100%",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid var(--line)",
+                borderRadius: 10,
+                color: "var(--text)",
+                padding: "10px 12px",
+                fontSize: "0.84rem",
+                fontFamily: "inherit",
+                outline: "none",
+                marginBottom: 14,
+              }}
             />
             <div style={{ display: "flex", gap: 8 }}>
               <button
                 onClick={handleReportMessage}
                 disabled={!reportReason.trim()}
-                className="btn btn-danger btn-sm"
-                style={{ flex: 1 }}
+                style={{
+                  flex: 1,
+                  height: 38,
+                  borderRadius: 999,
+                  background: "var(--danger)",
+                  border: "none",
+                  color: "#fff",
+                  fontFamily: "inherit",
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                  cursor: reportReason.trim() ? "pointer" : "not-allowed",
+                  opacity: reportReason.trim() ? 1 : 0.5,
+                }}
               >
                 Submit Report
               </button>
-              <button onClick={() => setReportingMessageId(null)} className="btn btn-secondary btn-sm">
+              <button
+                onClick={() => setReportingMessageId(null)}
+                style={{
+                  flex: 1,
+                  height: 38,
+                  borderRadius: 999,
+                  background: "var(--hover)",
+                  border: "1px solid var(--line)",
+                  color: "var(--soft)",
+                  fontFamily: "inherit",
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
                 Cancel
               </button>
             </div>
@@ -629,4 +887,3 @@ export default function CommunityChatClient({
     </div>
   );
 }
-
