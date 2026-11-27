@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Calendar, MapPin, Users, AlertCircle, Shield } from "lucide-react";
+import { X, Calendar, MapPin, Users, AlertCircle, Shield, RefreshCw } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import type { Destination } from "@/types/database";
 
 interface CreateGroupModalProps {
@@ -10,6 +11,7 @@ interface CreateGroupModalProps {
   onGroupCreated: (newGroup: any) => void;
   initialCommunityId?: string;
   initialDestinationId?: string;
+  initialDestinations?: Destination[];
 }
 
 export default function CreateGroupModal({
@@ -18,10 +20,13 @@ export default function CreateGroupModal({
   onGroupCreated,
   initialCommunityId,
   initialDestinationId,
+  initialDestinations,
 }: CreateGroupModalProps) {
   const [name, setName] = useState("");
   const [destinationId, setDestinationId] = useState(initialDestinationId || "");
-  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [destinations, setDestinations] = useState<Destination[]>(initialDestinations || []);
+  const [destinationsLoading, setDestinationsLoading] = useState(false);
+  const [destinationsError, setDestinationsError] = useState<string | null>(null);
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [loading, setLoading] = useState(false);
@@ -45,22 +50,55 @@ export default function CreateGroupModal({
 
   useEffect(() => {
     if (!isOpen) return;
+
+    if (initialDestinations && initialDestinations.length > 0) {
+      setDestinations(initialDestinations);
+      if (!destinationId) {
+        setDestinationId(initialDestinationId || initialDestinations[0].id);
+      }
+      return;
+    }
+
+    let isMounted = true;
     const fetchDestinations = async () => {
+      setDestinationsLoading(true);
+      setDestinationsError(null);
       try {
-        const res = await fetch("/api/destinations");
-        const data = await res.json();
-        if (data.destinations) {
-          setDestinations(data.destinations);
-          if (!destinationId && data.destinations.length > 0) {
-            setDestinationId(initialDestinationId || data.destinations[0].id);
+        const supabase = createClient();
+        const { data, error: sbError } = await supabase
+          .from("destinations")
+          .select("*")
+          .order("name");
+
+        if (sbError) {
+          throw sbError;
+        }
+
+        if (isMounted) {
+          const list = data || [];
+          setDestinations(list);
+          if (list.length > 0 && !destinationId) {
+            setDestinationId(initialDestinationId || list[0].id);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to fetch destinations:", err);
+        if (isMounted) {
+          setDestinationsError(err.message || "Failed to load destinations");
+        }
+      } finally {
+        if (isMounted) {
+          setDestinationsLoading(false);
+        }
       }
     };
+
     fetchDestinations();
-  }, [isOpen, initialDestinationId, destinationId]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, initialDestinationId, initialDestinations]);
 
   if (!isOpen) return null;
 
@@ -228,14 +266,33 @@ export default function CreateGroupModal({
               className="input-field"
               style={{ width: "100%", background: "#26221f" }}
               required
+              disabled={destinationsLoading}
             >
-              <option value="" disabled>Select a destination</option>
+              {destinationsLoading ? (
+                <option value="" disabled>Loading destinations...</option>
+              ) : destinationsError ? (
+                <option value="" disabled>Error loading destinations</option>
+              ) : destinations.length === 0 ? (
+                <option value="" disabled>No destinations available</option>
+              ) : (
+                <option value="" disabled>Select a destination</option>
+              )}
               {destinations.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name} ({d.region})
                 </option>
               ))}
             </select>
+            {destinationsLoading && (
+              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                <RefreshCw size={12} className="animate-spin" /> Loading destinations...
+              </p>
+            )}
+            {destinationsError && (
+              <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: 4 }}>
+                {destinationsError}. Please try again later.
+              </p>
+            )}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
