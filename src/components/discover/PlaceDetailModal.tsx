@@ -279,6 +279,7 @@ export default function PlaceDetailModal({
                 fontWeight: 500,
                 color: "var(--text)",
                 letterSpacing: "-0.01em",
+                fontFamily: "inherit",
               }}
             >
               {place?.name || "Loading…"}
@@ -286,6 +287,7 @@ export default function PlaceDetailModal({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             style={{
               display: "flex",
               alignItems: "center",

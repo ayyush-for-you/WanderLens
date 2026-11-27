@@ -91,16 +91,34 @@ export function calculatePercentileRanks(values: number[]): number[] {
 /**
  * Generates transparent explanation for why a place is recommended.
  */
+function ordinalSuffix(n: number): string {
+  const abs = Math.abs(n);
+  const mod100 = abs % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+  switch (abs % 10) {
+    case 1: return `${n}st`;
+    case 2: return `${n}nd`;
+    case 3: return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
+
 export function generateRecommendationReason(
   avgRating: number,
   nRatings: number,
   posts30d: number,
   activityNorm: number
 ): string {
+  const pct = Math.round(activityNorm * 100);
   if (activityNorm <= 0.25) {
-    return `Highly rated (${avgRating.toFixed(1)}/5) by ${nRatings} travellers, with only ${posts30d} recent post${posts30d === 1 ? "" : "s"} — a quiet local secret.`;
+    const postPhrase = posts30d === 0 ? "no recent posts" : `only ${posts30d} recent post${posts30d === 1 ? "" : "s"}`;
+    return `Highly rated (${avgRating.toFixed(1)}/5) by ${nRatings} traveller${nRatings === 1 ? "" : "s"}, with ${postPhrase} — a quiet local secret.`;
   }
-  return `Rated ${avgRating.toFixed(1)} by ${nRatings} travellers with modest visitor activity (${Math.round(activityNorm * 100)}th percentile).`;
+  const activityLabel =
+    pct >= 95 ? "high visitor activity" :
+    pct >= 70 ? "moderate visitor activity" :
+    "modest visitor activity";
+  return `Rated ${avgRating.toFixed(1)} by ${nRatings} traveller${nRatings === 1 ? "" : "s"} with ${activityLabel} (${ordinalSuffix(pct)} percentile).`;
 }
 
 /**

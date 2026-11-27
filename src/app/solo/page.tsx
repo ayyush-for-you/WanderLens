@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/layout/Navbar";
+import BottomNav from "@/components/layout/BottomNav";
 import SoloDashboard from "@/components/solo/SoloDashboard";
 
 export const metadata = { title: "Solo Mode" };
@@ -23,6 +24,7 @@ export default async function SoloPage() {
     <>
       <Navbar profile={profile} />
       <SoloDashboard profile={profile} />
+      <BottomNav />
     </>
   );
 }

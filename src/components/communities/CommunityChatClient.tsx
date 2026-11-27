@@ -294,7 +294,7 @@ export default function CommunityChatClient({
                 <MapPin size={12} style={{ color: "#B99A65" }} />
                 <span>{community?.destinations?.name || "Destination"}</span>
                 <span>·</span>
-                <span>{members.length} members</span>
+                <span>{members.length} {members.length === 1 ? "member" : "members"}</span>
               </p>
             </div>
           </div>
