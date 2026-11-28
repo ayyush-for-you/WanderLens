@@ -310,12 +310,10 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 *Note: If the recognition service is not running, WanderLens gracefully defaults to its simulated recognition fallback.*
 
-### 5. Run the Application
+### 5. TO access the website visit
 
 ```bash
-# In the project root directory
-npm install
-npm run dev
+# https://wanderlens-ten.vercel.app/
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
