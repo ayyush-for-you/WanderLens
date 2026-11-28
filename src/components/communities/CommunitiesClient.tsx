@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Compass,
   Share2,
+  Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Destination, Profile } from "@/types/database";
@@ -118,6 +119,30 @@ export default function CommunitiesClient({
       toast.error("Network error");
     } finally {
       setJoiningId(null);
+    }
+  };
+
+  const handleDeleteCommunity = async (communityId: string, name: string) => {
+    if (
+      !confirm(
+        `Permanently delete "${name}"? All messages and memberships will be removed.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/communities/${communityId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast.success("Community deleted");
+        setCommunities((prev) => prev.filter((c) => c.id !== communityId));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to delete community");
+      }
+    } catch {
+      toast.error("Network error");
     }
   };
 
@@ -624,6 +649,27 @@ export default function CommunitiesClient({
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    {c.is_owner && (
+                      <button
+                        onClick={() => handleDeleteCommunity(c.id, c.name)}
+                        aria-label={`Delete ${c.name}`}
+                        title="Delete community"
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: "50%",
+                          background: "rgba(220, 38, 38, 0.12)",
+                          border: "1px solid rgba(220, 38, 38, 0.35)",
+                          color: "#fca5a5",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         navigator.clipboard?.writeText(`${window.location.origin}/communities/${c.id}`);

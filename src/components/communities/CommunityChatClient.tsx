@@ -12,6 +12,7 @@ import {
   MapPin,
   Sparkles,
   Share2,
+  Trash2,
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -44,6 +45,7 @@ export default function CommunityChatClient({
 }: CommunityChatClientProps) {
   const [isMember, setIsMember] = useState(initialIsMember);
   const [joiningInvite, setJoiningInvite] = useState(false);
+  const [deletingCommunity, setDeletingCommunity] = useState(false);
   const [community] = useState(initialCommunity);
   const [messages, setMessages] = useState<any[]>(initialMessages);
   const [members] = useState<any[]>(initialMembers);
@@ -221,6 +223,34 @@ export default function CommunityChatClient({
   };
 
   const isOwner = profile?.id === community?.owner_id;
+
+  // Delete community (owner only)
+  const handleDeleteCommunity = async () => {
+    if (
+      !confirm(
+        `Permanently delete "${community?.name || "this community"}"? All messages and memberships will be removed.`
+      )
+    ) {
+      return;
+    }
+    setDeletingCommunity(true);
+    try {
+      const res = await fetch(`/api/communities/${communityId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast.success("Community deleted");
+        router.push("/communities");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Could not delete community");
+      }
+    } catch {
+      toast.error("Network error while deleting community");
+    } finally {
+      setDeletingCommunity(false);
+    }
+  };
 
   const handleAcceptInvite = async () => {
     setJoiningInvite(true);
@@ -887,7 +917,33 @@ export default function CommunityChatClient({
               ))}
             </div>
 
-            {!isOwner && (
+            {isOwner ? (
+              <button
+                onClick={handleDeleteCommunity}
+                disabled={deletingCommunity}
+                style={{
+                  marginTop: 16,
+                  width: "100%",
+                  height: 38,
+                  borderRadius: 999,
+                  background: "rgba(220, 38, 38, 0.16)",
+                  border: "1px solid rgba(220, 38, 38, 0.45)",
+                  color: "#fecaca",
+                  fontFamily: "inherit",
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                  cursor: deletingCommunity ? "not-allowed" : "pointer",
+                  opacity: deletingCommunity ? 0.6 : 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                }}
+              >
+                <Trash2 size={14} />
+                {deletingCommunity ? "Deleting…" : "Delete Community"}
+              </button>
+            ) : (
               <button
                 onClick={handleLeave}
                 style={{

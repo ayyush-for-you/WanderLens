@@ -20,6 +20,7 @@ import {
   Compass,
   Share2,
   UserPlus,
+  Trash2,
 } from "lucide-react";
 import { GROUP_LOCATION_UPDATE_INTERVAL_SECONDS } from "@/config/constants";
 import type { GroupMapMember } from "./GroupMap";
@@ -93,6 +94,7 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
   const [inviting, setInviting] = useState(false);
   const [inviteFeedback, setInviteFeedback] = useState<{ ok: boolean; text: string } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
 
   const watchIdRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
@@ -298,6 +300,34 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
       }
     } catch (err) {
       console.error("Failed to end trip:", err);
+    }
+  };
+
+  // Delete group permanently (owner only)
+  const handleDeleteGroup = async () => {
+    if (
+      !confirm(
+        `Permanently delete "${group?.name || "this group"}"? All trip locations, alerts, and memberships will be removed.`
+      )
+    ) {
+      return;
+    }
+    setDeletingGroup(true);
+    try {
+      const res = await fetch(`/api/groups/${groupId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        router.push("/groups");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Failed to delete group");
+      }
+    } catch (err) {
+      console.error("Failed to delete group:", err);
+      setError("Network error while deleting group");
+    } finally {
+      setDeletingGroup(false);
     }
   };
 
@@ -553,22 +583,48 @@ export default function GroupLiveMapClient({ groupId }: { groupId: string }) {
           </button>
 
           {group.is_owner ? (
-            <button
-              onClick={handleEndTrip}
-              style={{
-                height: 32,
-                padding: "0 12px",
-                borderRadius: 999,
-                background: "rgba(220, 38, 38, 0.1)",
-                border: "1px solid rgba(220, 38, 38, 0.35)",
-                color: "#fca5a5",
-                fontSize: "0.78rem",
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
-            >
-              End Trip Early
-            </button>
+            <>
+              <button
+                onClick={handleEndTrip}
+                style={{
+                  height: 32,
+                  padding: "0 12px",
+                  borderRadius: 999,
+                  background: "rgba(220, 38, 38, 0.1)",
+                  border: "1px solid rgba(220, 38, 38, 0.35)",
+                  color: "#fca5a5",
+                  fontSize: "0.78rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                End Trip Early
+              </button>
+              <button
+                onClick={handleDeleteGroup}
+                disabled={deletingGroup}
+                aria-label="Delete group"
+                title="Delete group permanently"
+                style={{
+                  height: 32,
+                  padding: "0 12px",
+                  borderRadius: 999,
+                  background: "rgba(220, 38, 38, 0.18)",
+                  border: "1px solid rgba(220, 38, 38, 0.45)",
+                  color: "#fecaca",
+                  fontSize: "0.78rem",
+                  fontWeight: 500,
+                  cursor: deletingGroup ? "not-allowed" : "pointer",
+                  opacity: deletingGroup ? 0.6 : 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                <Trash2 size={13} />
+                {deletingGroup ? "Deleting…" : "Delete"}
+              </button>
+            </>
           ) : (
             <button
               onClick={handleLeaveGroup}
